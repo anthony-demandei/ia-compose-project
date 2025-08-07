@@ -1,0 +1,871 @@
+version: '2.1'
+title: Questionário Técnico de Levantamento de Requisitos SaaS/BaaS
+description: Questionário focado em aspectos técnicos para projetos SaaS e Banking as a Service
+created_date: '2025-01-06'
+total_questions: 26
+metadata:
+  stages:
+  - business: Requisitos de negócio e objetivos estratégicos
+  - functional: Requisitos funcionais e features do sistema
+  - technical: Arquitetura técnica e implementação
+  - nfr: Requisitos não-funcionais e qualidade
+  global_settings:
+    show_progress: true
+    allow_back_navigation: true
+    save_partial_responses: true
+    adaptive_questioning: true
+    max_selections_per_session: 12
+  scoring:
+    methodology: weighted_scoring
+    criteria:
+      business_value: 0.3
+      technical_complexity: 0.2
+      user_impact: 0.25
+      strategic_alignment: 0.15
+      resource_requirements: 0.1
+catalog:
+- id: B001
+  stage: business
+  text: Que tipo de projeto você está planejando?
+  type: single_choice
+  options:
+  - id: new_dev
+    label: Novo desenvolvimento
+  - id: enhancement
+    label: Melhoria de sistema existente
+  - id: migration
+    label: Migração/Modernização
+  - id: maintenance
+    label: Manutenção/Suporte
+  - id: poc
+    label: Prova de conceito
+  tags:
+  - project-type
+  - planning
+  - critical
+  condition: null
+  weight: 10
+  required: true
+  version: 1
+- id: B003
+  stage: business
+  text: Em que setor sua organização atua?
+  type: single_choice
+  options:
+  - id: healthcare
+    label: Saúde
+  - id: finance
+    label: Serviços financeiros
+  - id: ecommerce
+    label: E-commerce/Varejo
+  - id: education
+    label: Educação
+  - id: government
+    label: Governo
+  - id: manufacturing
+    label: Manufatura
+  - id: technology
+    label: Tecnologia
+  - id: logistics
+    label: Logística
+  - id: real_estate
+    label: Imobiliário
+  - id: other
+    label: Outro
+  tags:
+  - industry
+  - compliance
+  - domain
+  condition: null
+  weight: 8
+  required: true
+  version: 1
+- id: B004
+  stage: business
+  text: Qual é a faixa de orçamento do projeto?
+  type: single_choice
+  options:
+  - id: under_50k
+    label: Menos de R$ 50.000
+  - id: 50k_200k
+    label: R$ 50.000 - R$ 200.000
+  - id: 200k_500k
+    label: R$ 200.000 - R$ 500.000
+  - id: 500k_1m
+    label: R$ 500.000 - R$ 1 milhão
+  - id: 1m_5m
+    label: R$ 1 milhão - R$ 5 milhões
+  - id: over_5m
+    label: Mais de R$ 5 milhões
+  - id: not_defined
+    label: Orçamento ainda não definido
+  tags:
+  - budget
+  - planning
+  - constraints
+  condition:
+    all:
+    - q: B001
+      op: in
+      v:
+      - new_dev
+      - enhancement
+      - migration
+  weight: 8
+  required: true
+  version: 1
+- id: B005
+  stage: business
+  text: Qual é o cronograma esperado do projeto?
+  type: single_choice
+  options:
+  - id: under_3m
+    label: Menos de 3 meses
+  - id: 3_6m
+    label: 3-6 meses
+  - id: 6_12m
+    label: 6-12 meses
+  - id: 12_18m
+    label: 12-18 meses
+  - id: 18_24m
+    label: 18-24 meses
+  - id: over_24m
+    label: Mais de 24 meses
+  - id: ongoing
+    label: Contínuo/Sem data final
+  - id: flexible
+    label: Cronograma flexível
+  tags:
+  - timeline
+  - planning
+  - constraints
+  condition: null
+  weight: 7
+  required: true
+  version: 1
+- id: B008
+  stage: business
+  text: Existem requisitos específicos de conformidade?
+  type: multi_choice
+  options:
+  - id: lgpd
+    label: LGPD (Proteção de dados)
+  - id: hipaa
+    label: HIPAA (Saúde)
+  - id: pci_dss
+    label: PCI-DSS (Cartões de pagamento)
+  - id: sox
+    label: SOX (Financeiro)
+  - id: iso27001
+    label: ISO 27001 (Segurança)
+  - id: wcag
+    label: WCAG (Acessibilidade)
+  - id: industry_specific
+    label: Regulamentações específicas do setor
+  - id: none
+    label: Nenhuma
+  tags:
+  - compliance
+  - regulatory
+  - security
+  condition: null
+  weight: 9
+  required: true
+  version: 1
+- id: B009
+  stage: business
+  text: Qual é o número esperado de usuários?
+  type: single_choice
+  options:
+  - id: under_100
+    label: Menos de 100
+  - id: '100_500'
+    label: 100-500
+  - id: 500_1k
+    label: 500-1.000
+  - id: 1k_5k
+    label: 1.000-5.000
+  - id: 5k_10k
+    label: 5.000-10.000
+  - id: 10k_50k
+    label: 10.000-50.000
+  - id: 50k_100k
+    label: 50.000-100.000
+  - id: over_100k
+    label: Mais de 100.000
+  tags:
+  - scale
+  - capacity
+  - planning
+  condition: null
+  weight: 7
+  required: true
+  version: 1
+- id: B010
+  stage: business
+  text: Qual é o seu modelo de negócio?
+  type: single_choice
+  options:
+  - id: b2b
+    label: B2B (Business to Business)
+  - id: b2c
+    label: B2C (Business to Consumer)
+  - id: b2b2c
+    label: B2B2C (Business to Business to Consumer)
+  - id: saas
+    label: SaaS (Software as a Service)
+  - id: marketplace
+    label: Marketplace
+  - id: internal
+    label: Sistema interno corporativo
+  - id: government
+    label: Governo/Serviço público
+  - id: nonprofit
+    label: Organização sem fins lucrativos
+  tags:
+  - business-model
+  - strategy
+  - architecture
+  condition: null
+  weight: 8
+  required: true
+  version: 1
+- id: B011
+  stage: business
+  text: Você possui sistemas existentes que precisam de integração?
+  type: single_choice
+  options:
+  - id: multiple
+    label: Sim, múltiplos sistemas
+  - id: single
+    label: Sim, um sistema principal
+  - id: none
+    label: Não há sistemas existentes
+  - id: replace
+    label: Planejamos substituir sistemas existentes
+  tags:
+  - integration
+  - legacy
+  - architecture
+  condition: null
+  weight: 8
+  required: true
+  version: 1
+- id: B012
+  stage: business
+  text: Quais sistemas existentes precisam de integração?
+  type: multi_choice
+  options:
+  - id: erp
+    label: Sistema ERP
+  - id: crm
+    label: Sistema CRM
+  - id: payment
+    label: Gateway de pagamento
+  - id: email
+    label: Plataforma de email/comunicação
+  - id: analytics
+    label: Ferramentas de Analytics/BI
+  - id: hr
+    label: Sistema de gestão de RH
+  - id: document
+    label: Gestão de documentos
+  - id: apis
+    label: APIs de terceiros
+  tags:
+  - integration
+  - systems
+  - technical
+  condition:
+    all:
+    - q: B011
+      op: in
+      v:
+      - multiple
+      - single
+  weight: 7
+  required: true
+  version: 1
+- id: F001
+  stage: functional
+  text: Que tipo de aplicação você está construindo?
+  type: single_choice
+  options:
+  - id: web_app
+    label: Aplicação web
+  - id: mobile_app
+    label: Aplicação mobile
+  - id: desktop_app
+    label: Aplicação desktop
+  - id: api_services
+    label: API/Microserviços
+  - id: ecommerce
+    label: Plataforma de e-commerce
+  - id: enterprise
+    label: Sistema corporativo
+  - id: iot_embedded
+    label: Sistema IoT/Embarcado
+  - id: data_platform
+    label: Plataforma de análise de dados
+  tags:
+  - application-type
+  - platform
+  - architecture
+  condition: null
+  weight: 10
+  required: true
+  version: 1
+- id: F002
+  stage: functional
+  text: Quais são as funcionalidades principais necessárias?
+  type: multi_choice
+  options:
+  - id: auth
+    label: Autenticação e autorização de usuários
+  - id: data_mgmt
+    label: Gestão de dados (CRUD)
+  - id: reporting
+    label: Relatórios e análises
+  - id: workflow
+    label: Gestão de workflow
+  - id: communication
+    label: Comunicação/Mensageria
+  - id: file_mgmt
+    label: Gestão de arquivos
+  - id: search
+    label: Funcionalidade de busca
+  - id: integration
+    label: Capacidades de integração
+  tags:
+  - features
+  - core-functionality
+  - requirements
+  condition: null
+  weight: 9
+  required: true
+  version: 1
+- id: F003
+  stage: functional
+  text: Que métodos de autenticação são necessários?
+  type: multi_choice
+  options:
+  - id: username_pass
+    label: Usuário/Senha
+  - id: sso
+    label: Single Sign-On (SSO)
+  - id: mfa
+    label: Autenticação multifator
+  - id: biometric
+    label: Autenticação biométrica
+  - id: social
+    label: Login social
+  - id: certificate
+    label: Baseado em certificado
+  - id: api_keys
+    label: Chaves de API
+  - id: oauth
+    label: OAuth/JWT
+  tags:
+  - authentication
+  - security
+  - user-management
+  condition:
+    all:
+    - q: F002
+      op: contains
+      v: auth
+  weight: 8
+  required: true
+  version: 1
+- id: F010
+  stage: functional
+  text: Quais plataformas devem ser suportadas?
+  type: multi_choice
+  options:
+  - id: desktop_web
+    label: Navegadores web desktop
+  - id: mobile_web
+    label: Navegadores web mobile
+  - id: ios_native
+    label: App nativo iOS
+  - id: android_native
+    label: App nativo Android
+  - id: windows
+    label: Windows Desktop
+  - id: macos
+    label: macOS Desktop
+  - id: linux
+    label: Linux Desktop
+  - id: cross_mobile
+    label: Mobile cross-platform
+  tags:
+  - platform
+  - deployment
+  - compatibility
+  condition:
+    all:
+    - q: F001
+      op: in
+      v:
+      - web_app
+      - mobile_app
+      - desktop_app
+  weight: 8
+  required: true
+  version: 1
+- id: T001
+  stage: technical
+  text: Qual padrão arquitetural você prefere?
+  type: single_choice
+  options:
+  - id: monolithic
+    label: Monolítico
+  - id: microservices
+    label: Microserviços
+  - id: serverless
+    label: Serverless
+  - id: soa
+    label: Arquitetura orientada a serviços (SOA)
+  - id: event_driven
+    label: Orientado a eventos
+  - id: layered
+    label: Arquitetura em camadas
+  - id: ddd
+    label: Domain-Driven Design
+  - id: recommendation
+    label: Não tenho certeza/Preciso de recomendação
+  tags:
+  - architecture
+  - design-pattern
+  - technical
+  condition: null
+  weight: 9
+  required: true
+  version: 1
+- id: T002
+  stage: technical
+  text: Onde a aplicação será hospedada?
+  type: single_choice
+  options:
+  - id: aws
+    label: Nuvem pública (AWS)
+  - id: azure
+    label: Nuvem pública (Azure)
+  - id: gcp
+    label: Nuvem pública (Google Cloud)
+  - id: private_cloud
+    label: Nuvem privada
+  - id: on_premises
+    label: On-premises
+  - id: hybrid
+    label: Nuvem híbrida
+  - id: multi_cloud
+    label: Multi-cloud
+  - id: not_decided
+    label: Ainda não decidido
+  tags:
+  - infrastructure
+  - cloud
+  - deployment
+  condition: null
+  weight: 8
+  required: true
+  version: 1
+- id: N001
+  stage: nfr
+  text: Quais são seus requisitos de performance?
+  type: single_choice
+  options:
+  - id: sub_second
+    label: Tempo de resposta sub-segundo
+  - id: 1_3_sec
+    label: Tempo de resposta 1-3 segundos
+  - id: 3_5_sec
+    label: Tempo de resposta 3-5 segundos
+  - id: best_effort
+    label: Melhor esforço
+  - id: real_time
+    label: Processamento em tempo real
+  - id: batch_ok
+    label: Processamento em lote aceitável
+  - id: hft
+    label: Nível de high-frequency trading
+  - id: standard
+    label: Aplicação web padrão
+  tags:
+  - performance
+  - response-time
+  - requirements
+  condition: null
+  weight: 8
+  required: true
+  version: 1
+- id: N002
+  stage: nfr
+  text: Qual é o requisito de disponibilidade?
+  type: single_choice
+  options:
+  - id: five_nines
+    label: 99.999% (5 nines)
+  - id: four_nines
+    label: 99.99% (4 nines)
+  - id: three_nines
+    label: 99.9% (3 nines)
+  - id: two_nines
+    label: 99% de disponibilidade
+  - id: business_hours
+    label: Apenas horário comercial
+  - id: best_effort
+    label: Melhor esforço
+  - id: critical_247
+    label: 24/7 crítico
+  - id: maintenance_ok
+    label: Manutenção programada aceitável
+  tags:
+  - availability
+  - reliability
+  - sla
+  condition: null
+  weight: 9
+  required: true
+  version: 1
+- id: T003
+  stage: technical
+  text: Qual modelo de arquitetura SaaS você precisa?
+  type: single_choice
+  options:
+  - id: single_tenant
+    label: Single-tenant (isolamento completo por cliente)
+  - id: multi_tenant_shared
+    label: Multi-tenant com banco compartilhado
+  - id: multi_tenant_isolated
+    label: Multi-tenant com isolamento de dados
+  - id: hybrid_tenant
+    label: Híbrido (single + multi tenant)
+  - id: not_applicable
+    label: Não se aplica (não é SaaS)
+  tags:
+  - saas
+  - multi-tenancy
+  - architecture
+  condition: null
+  weight: 9
+  required: false
+  version: 1
+- id: T004
+  stage: technical
+  text: Quais tipos de APIs você precisa implementar?
+  type: multi_choice
+  options:
+  - id: rest_api
+    label: REST APIs
+  - id: graphql
+    label: GraphQL APIs
+  - id: webhooks
+    label: Webhooks para notificações
+  - id: websocket
+    label: WebSockets para tempo real
+  - id: grpc
+    label: gRPC para microserviços
+  - id: public_api
+    label: APIs públicas para desenvolvedores
+  - id: admin_api
+    label: APIs administrativas internas
+  tags:
+  - api
+  - integration
+  - architecture
+  condition: null
+  weight: 8
+  required: false
+  version: 1
+- id: T005
+  stage: technical
+  text: Que estratégias de escalabilidade você precisa?
+  type: multi_choice
+  options:
+  - id: horizontal_scaling
+    label: Auto-scaling horizontal
+  - id: load_balancing
+    label: Load balancing avançado
+  - id: caching_layer
+    label: Camada de cache (Redis/Memcached)
+  - id: cdn
+    label: CDN para conteúdo estático
+  - id: database_sharding
+    label: Sharding de banco de dados
+  - id: read_replicas
+    label: Read replicas para consultas
+  - id: queue_system
+    label: Sistema de filas para processamento assíncrono
+  tags:
+  - scalability
+  - performance
+  - infrastructure
+  condition: null
+  weight: 8
+  required: false
+  version: 1
+- id: F020
+  stage: functional
+  text: Que funcionalidades de billing/cobrança você precisa?
+  type: multi_choice
+  options:
+  - id: subscription
+    label: Assinaturas recorrentes
+  - id: usage_based
+    label: Cobrança baseada em uso (metering)
+  - id: tiered_pricing
+    label: Preços em camadas (tiers)
+  - id: freemium
+    label: Modelo freemium
+  - id: trial_periods
+    label: Períodos de trial
+  - id: invoicing
+    label: Emissão de faturas automática
+  - id: payment_methods
+    label: Múltiplos métodos de pagamento
+  - id: dunning
+    label: Gestão de cobrança (dunning)
+  tags:
+  - billing
+  - saas
+  - monetization
+  condition:
+    all:
+    - q: B010
+      op: in
+      v:
+      - saas
+      - b2b
+      - b2c
+  weight: 8
+  required: false
+  version: 1
+- id: T006
+  stage: technical
+  text: Que recursos de monitoramento e observabilidade você precisa?
+  type: multi_choice
+  options:
+  - id: apm
+    label: APM (Application Performance Monitoring)
+  - id: centralized_logging
+    label: Logging centralizado
+  - id: metrics_dashboard
+    label: Dashboards de métricas
+  - id: alerting
+    label: Sistema de alertas
+  - id: distributed_tracing
+    label: Rastreamento distribuído
+  - id: health_checks
+    label: Health checks automatizados
+  - id: sla_monitoring
+    label: Monitoramento de SLAs
+  tags:
+  - monitoring
+  - observability
+  - devops
+  condition: null
+  weight: 7
+  required: false
+  version: 1
+- id: T007
+  stage: technical
+  text: Quais serviços de core banking você precisa implementar?
+  type: multi_choice
+  options:
+  - id: account_management
+    label: Gestão de contas bancárias
+  - id: transaction_processing
+    label: Processamento de transações
+  - id: balance_inquiry
+    label: Consulta de saldos
+  - id: fund_transfers
+    label: Transferências entre contas
+  - id: payment_rails
+    label: Integração com rails de pagamento
+  - id: card_issuing
+    label: Emissão de cartões
+  - id: loan_origination
+    label: Originação de empréstimos
+  - id: kyc_verification
+    label: Verificação KYC/AML
+  tags:
+  - baas
+  - banking
+  - financial
+  condition:
+    any:
+    - q: B003
+      op: in
+      v:
+      - finance
+    - q: intake_text
+      op: contains
+      v:
+      - bank
+      - financial
+      - fintech
+  weight: 9
+  required: false
+  version: 1
+- id: T008
+  stage: technical
+  text: Que integrações financeiras você precisa?
+  type: multi_choice
+  options:
+  - id: pix
+    label: PIX (Sistema de Pagamentos Instantâneos)
+  - id: ted_doc
+    label: TED/DOC
+  - id: boleto
+    label: Boleto bancário
+  - id: open_banking
+    label: Open Banking APIs
+  - id: bacen_integration
+    label: Integração com BACEN
+  - id: serasa_spc
+    label: Bureaus de crédito (Serasa/SPC)
+  - id: card_networks
+    label: Redes de cartão (Visa/Mastercard)
+  - id: custody_services
+    label: Serviços de custódia
+  tags:
+  - baas
+  - integration
+  - financial
+  - brazil
+  condition:
+    any:
+    - q: B003
+      op: in
+      v:
+      - finance
+    - q: T007
+      op: any_selected
+      v: []
+  weight: 8
+  required: false
+  version: 1
+- id: T009
+  stage: technical
+  text: Que controles de compliance financeiro você precisa?
+  type: multi_choice
+  options:
+  - id: transaction_limits
+    label: Limites de transação configuráveis
+  - id: fraud_detection
+    label: Detecção de fraude em tempo real
+  - id: aml_monitoring
+    label: Monitoramento AML (Anti-Money Laundering)
+  - id: audit_trail
+    label: Trilha de auditoria completa
+  - id: regulatory_reporting
+    label: Relatórios regulatórios automáticos
+  - id: risk_scoring
+    label: Sistema de scoring de risco
+  - id: sanctions_screening
+    label: Screening de listas de sanções
+  - id: data_residency
+    label: Residência de dados no Brasil
+  tags:
+  - baas
+  - compliance
+  - security
+  - regulatory
+  condition:
+    any:
+    - q: B003
+      op: in
+      v:
+      - finance
+    - q: B008
+      op: contains
+      v: sox
+  weight: 9
+  required: false
+  version: 1
+- id: F021
+  stage: functional
+  text: Que recursos de segurança financeira são necessários?
+  type: multi_choice
+  options:
+  - id: hsm_integration
+    label: Integração com HSM (Hardware Security Module)
+  - id: tokenization
+    label: Tokenização de dados sensíveis
+  - id: encryption_rest
+    label: Criptografia em repouso
+  - id: encryption_transit
+    label: Criptografia em trânsito
+  - id: certificate_management
+    label: Gestão de certificados digitais
+  - id: secure_api
+    label: APIs seguras com OAuth/mTLS
+  - id: biometric_auth
+    label: Autenticação biométrica
+  - id: device_fingerprint
+    label: Device fingerprinting
+  tags:
+  - baas
+  - security
+  - encryption
+  - financial
+  condition:
+    any:
+    - q: B003
+      op: in
+      v:
+      - finance
+    - q: B008
+      op: contains_any
+      v:
+      - sox
+      - pci_dss
+  weight: 9
+  required: false
+  version: 1
+validation_rules:
+- rule_type: dependency_check
+  message: Orçamento deve ser especificado para projetos de novo desenvolvimento
+  condition:
+    if_field: B001
+    if_values:
+    - new_dev
+    - enhancement
+    then_field: B004
+    then_required: true
+- rule_type: consistency_check
+  message: Alta disponibilidade requer escolhas apropriadas de infraestrutura
+  condition:
+    if_field: N002
+    if_values:
+    - five_nines
+    - four_nines
+    then_field: T002
+    then_not_values:
+    - on_premises
+- rule_type: completeness_check
+  message: Todas as perguntas obrigatórias devem ser respondidas
+  condition: all questions with required=true must have responses
+scoring_matrix:
+  complexity_factors:
+  - factor: integration_complexity
+    condition:
+      field: B011
+      value: multiple
+    weight_modifier: 1.5
+  - factor: scale_complexity
+    condition:
+      field: B009
+      values:
+      - over_100k
+      - 50k_100k
+    weight_modifier: 1.3
+  - factor: compliance_complexity
+    condition:
+      field: B008
+      count_threshold: 2
+    weight_modifier: 1.4
+  priority_calculation:
+    formula: (business_value * 0.3) + (user_impact * 0.25) + (strategic_alignment * 0.2) + (1/technical_complexity * 0.15) + (1/resource_requirements * 0.1)

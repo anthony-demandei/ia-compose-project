@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Intake Inteligente - Demandei</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Demandei Color Palette */
+            --primary-green: #40ca9e;
+            --secondary-dark: #3c3d54;
+            --neutral-mocha: #967C6B;
+            --semantic-purple: #844fc1;
+            --semantic-success: #21bf06;
+            --semantic-error: #ff4d6b;
+            
+            /* Typography Scale (1.25 ratio) */
+            --text-xs: 12px;
+            --text-sm: 14px;
+            --text-base: 16px;
+            --text-lg: 20px;
+            --text-xl: 25px;
+            --text-2xl: 31px;
+            --text-3xl: 39px;
+            
+            /* Spacing */
+            --space-1: 4px;
+            --space-2: 8px;
+            --space-3: 12px;
+            --space-4: 16px;
+            --space-5: 20px;
+            --space-6: 24px;
+            --space-8: 32px;
+            --space-10: 40px;
+            --space-12: 48px;
+            
+            /* Layout */
+            --border-radius: 8px;
+            --border-radius-lg: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+            color: var(--secondary-dark);
+            line-height: 1.5;
+        }
+
+        .container {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            max-width: 1000px;
+            width: 100%;
+            margin: var(--space-6) auto;
+            border: 1px solid #e5e7eb;
+        }
+
+
+        .progress-bar {
+            background: #f3f4f6;
+            height: 4px;
+            border-radius: 2px;
+            margin-bottom: var(--space-6);
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: var(--primary-green);
+            height: 100%;
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .content {
+            padding: var(--space-8);
+        }
+
+        /* Step 1: Intake */
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .intake-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        label {
+            font-weight: 600;
+            color: var(--secondary-dark);
+            margin-bottom: var(--space-2);
+            display: block;
+            font-size: var(--text-sm);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: var(--space-4);
+            border: 1px solid #d1d5db;
+            border-radius: var(--border-radius);
+            font-size: var(--text-base);
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(64, 202, 158, 0.1);
+        }
+
+        .char-count {
+            text-align: right;
+            color: #9ca3af;
+            font-size: var(--text-sm);
+            margin-top: var(--space-2);
+        }
+
+        /* Wizard Questions */
+        .question-container {
+            margin-bottom: var(--space-8);
+        }
+
+        .question-text {
+            font-size: var(--text-lg);
+            font-weight: 600;
+            color: var(--secondary-dark);
+            margin-bottom: var(--space-4);
+        }
+
+        .question-number {
+            color: var(--primary-green);
+            font-weight: 600;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-button {
+            padding: var(--space-4) var(--space-5);
+            border: 1px solid #d1d5db;
+            border-radius: var(--border-radius);
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            font-size: var(--text-base);
+            color: var(--secondary-dark);
+        }
+
+        .option-button:hover {
+            border-color: var(--primary-green);
+            background: #f0fdf4;
+        }
+
+        .option-button.selected {
+            border-color: var(--primary-green);
+            background: var(--primary-green);
+            color: white;
+        }
+
+        .option-button.multi-selected {
+            border-color: var(--primary-green);
+            background: var(--primary-green);
+            color: white;
+        }
+
+        /* Navigation */
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: var(--space-3) var(--space-6);
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: var(--text-base);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .btn-primary {
+            background: var(--primary-green);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #36b88e;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(64, 202, 158, 0.2);
+        }
+
+        .btn-secondary {
+            background: #f9fafb;
+            color: var(--secondary-dark);
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Summary Step */
+        .summary-content {
+            background: #f9fafb;
+            border-radius: var(--border-radius);
+            border: 1px solid #e5e7eb;
+            padding: var(--space-6);
+            margin-bottom: var(--space-5);
+        }
+
+        .summary-content h3 {
+            color: var(--secondary-dark);
+            margin-bottom: var(--space-4);
+            font-weight: 600;
+        }
+
+        .summary-content ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .summary-content li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .summary-content li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--primary-green);
+            font-weight: bold;
+        }
+
+        /* Scope Document */
+        .scope-document {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: var(--border-radius);
+            padding: var(--space-8);
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .scope-document h1, .scope-document h2, .scope-document h3 {
+            color: var(--secondary-dark);
+            margin-top: var(--space-5);
+            margin-bottom: var(--space-3);
+        }
+
+        .scope-document h1 { font-size: var(--text-2xl); font-weight: 700; }
+        .scope-document h2 { font-size: var(--text-xl); color: var(--primary-green); font-weight: 600; }
+        .scope-document h3 { font-size: var(--text-lg); font-weight: 600; }
+
+        .scope-document ul {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+
+        .scope-document li {
+            margin: 5px 0;
+        }
+
+        .download-btn {
+            margin-top: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .download-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid var(--primary-green);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto var(--space-4);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Status Messages */
+        .status-message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .status-message.success {
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
+
+        .status-message.error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .status-message.show {
+            display: block;
+        }
+
+        /* Project Info Container - Sistema Universal V3.0 */
+        .project-info-container {
+            margin: var(--space-5) 0;
+            padding: 0;
+        }
+
+        .project-info-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: var(--border-radius);
+            padding: var(--space-6);
+            margin-bottom: var(--space-5);
+        }
+
+        .project-info-card h3 {
+            margin: 0 0 var(--space-4) 0;
+            color: var(--secondary-dark);
+            font-size: var(--text-lg);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .project-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .detail-item {
+            background: #f9fafb;
+            padding: var(--space-3);
+            border-radius: var(--border-radius);
+            border: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .detail-value {
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                margin: var(--space-4);
+                border-radius: var(--border-radius);
+            }
+            
+            .content {
+                padding: var(--space-6) var(--space-5);
+            }
+            
+            .project-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .navigation {
+                flex-direction: column;
+                gap: var(--space-3);
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="content">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="status-message" id="statusMessage"></div>
+
+            <!-- Step 1: Initial Intake -->
+            <div class="step active" id="step-intake">
+                <h2>Descreva seu projeto</h2>
+                <p style="margin: var(--space-3) 0; color: #6b7280; font-size: var(--text-sm);">
+                    Seja específico sobre funcionalidades, público-alvo, objetivos, tecnologias, orçamento e prazo.
+                </p>
+                
+                <!-- Dicas compactas -->
+                <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: var(--space-3); margin: var(--space-4) 0; border-radius: var(--border-radius); font-size: var(--text-sm);">
+                    <span style="color: var(--primary-green); font-weight: 500;">Inclua:</span> tipo de sistema, funcionalidades principais, usuários estimados, setor da empresa, orçamento, prazo e tecnologias preferidas.
+                </div>
+                
+                <div class="intake-form">
+                    <label for="intakeText">
+                        <strong>Descrição Detalhada do Projeto:</strong>
+                    </label>
+                    <textarea 
+                        id="intakeText" 
+                        placeholder="Exemplo: Sistema de gestão para clínica médica com 3 médicos, 200 pacientes/mês. Funcionalidades: agendamento, prontuários eletrônicos, receitas digitais. Orçamento: R$ 50.000. Prazo: 3 meses. Integração com WhatsApp."
+                        maxlength="8000"
+                        style="min-height: 200px;"
+                    ></textarea>
+                    <div class="char-count">
+                        <span id="charCount">0</span> / 8000 caracteres
+                        <span id="qualityIndicator" style="margin-left: 15px;"></span>
+                    </div>
+                </div>
+
+                <div class="navigation">
+                    <div></div>
+                    <button class="btn btn-primary" onclick="submitIntake()" id="btnStartWizard">
+                        Analisar e Começar Wizard →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Wizard Questions -->
+            <div class="step" id="step-wizard">
+                <div class="loading" id="loadingQuestions">
+                    <div class="spinner"></div>
+                    <p>Analisando seu projeto...</p>
+                    <div style="margin-top: 15px; color: #666; font-size: 14px;">
+                        <div id="loadingDetails">Classificando requisitos e selecionando perguntas relevantes...</div>
+                    </div>
+                </div>
+
+                <div id="wizardContent" style="display: none;">
+                    <!-- Indicador de progresso das perguntas -->
+                    <div style="background: #f8f9ff; border-radius: 10px; padding: 15px; margin-bottom: 25px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span style="font-weight: 600; color: #667eea;">Perguntas Selecionadas Especificamente</span>
+                            <span id="questionProgress" style="color: #666;">1 de X</span>
+                        </div>
+                        <div style="background: #e0e0e0; height: 6px; border-radius: 3px; overflow: hidden;">
+                            <div id="questionProgressBar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 100%; width: 0%; transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+
+                    <div id="questionContainer"></div>
+                    
+                    <!-- Dica sobre eficiência -->
+                    <div style="background: #f0fdf4; border-left: 4px solid var(--primary-green); padding: var(--space-3); margin: var(--space-5) 0; border-radius: var(--border-radius); font-size: var(--text-sm); color: var(--secondary-dark);">
+                        <strong>Sistema inteligente:</strong> Selecionamos apenas as perguntas mais relevantes para o seu projeto, 
+                        evitando questões desnecessárias.
+                    </div>
+                    
+                    <div class="navigation">
+                        <button class="btn btn-secondary" onclick="previousQuestion()" id="btnPrevious">
+                            ← Anterior
+                        </button>
+                        <button class="btn btn-primary" onclick="nextQuestion()" id="btnNext">
+                            Próxima →
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Summary -->
+            <div class="step" id="step-summary">
+                <h2>Resumo Inteligente do Projeto</h2>
+                <p style="margin: 15px 0; color: #666;">
+                    Baseado na sua descrição inicial e nas perguntas respondidas, geramos este resumo estruturado:
+                </p>
+                
+                <div class="loading" id="loadingSummary">
+                    <div class="spinner"></div>
+                    <p>Analisando respostas e gerando resumo inteligente...</p>
+                </div>
+
+                <div id="summaryContent" style="display: none;">
+                    <div class="summary-content" id="summaryText"></div>
+                    
+                    <!-- Última oportunidade de texto livre -->
+                    <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: var(--space-4); margin: var(--space-5) 0; border-radius: var(--border-radius);">
+                        <h4 style="margin: 0 0 var(--space-3) 0; color: #92400e; font-weight: 600;">Última oportunidade para ajustes</h4>
+                        <p style="margin: 0; color: #856404; font-size: 14px;">
+                            Esta é sua segunda e última chance de adicionar informações via texto livre. 
+                            O resto do processo será guiado por perguntas específicas.
+                        </p>
+                    </div>
+                    
+                    <label for="finalNote">
+                        <strong>Complementos e Ajustes Finais:</strong>
+                    </label>
+                    <textarea 
+                        id="finalNote" 
+                        placeholder="Use este espaço para:
+• Corrigir qualquer informação do resumo
+• Adicionar detalhes técnicos específicos que não foram cobertos
+• Mencionar integrações ou requisitos especiais
+• Esclarecer prioridades ou restrições importantes
+• Ajustar escopo ou expectativas
+
+Exemplo:
+'O sistema precisa também de integração com WhatsApp Business API para envio automático de notificações. Além disso, é importante que tenha dashboard executivo com métricas em tempo real. A prioridade máxima é o módulo de pagamentos, que deve estar pronto nos primeiros 2 meses.'"
+                        style="min-height: 150px;"
+                        maxlength="3000"
+                    ></textarea>
+                    <div class="char-count" style="margin-top: 5px;">
+                        <span id="finalNoteCount">0</span> / 3000 caracteres
+                    </div>
+
+                    <div class="navigation">
+                        <button class="btn btn-secondary" onclick="backToWizard()">
+                            ← Revisar Respostas
+                        </button>
+                        <button class="btn btn-primary" onclick="generateScope()">
+                            Gerar Escopo Técnico Final →
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Scope Document -->
+            <div class="step" id="step-scope">
+                <h2>Documento de Escopo Técnico</h2>
+                
+                <div class="loading" id="loadingScope">
+                    <div class="spinner"></div>
+                    <p>Gerando documento de escopo...</p>
+                </div>
+
+                <div id="scopeContent" style="display: none;">
+                    <div class="scope-document" id="scopeDocument"></div>
+                    
+                    <div class="navigation">
+                        <button class="btn btn-secondary" onclick="startOver()">
+                            Novo Projeto
+                        </button>
+                        <button class="btn btn-primary download-btn" onclick="downloadScope()">
+                            <svg fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"></path>
+                            </svg>
+                            Baixar Escopo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        // Estado global
+        let state = {
+            sessionId: null,
+            questionIds: [],
+            questions: {},
+            currentQuestionIndex: 0,
+            answers: {},
+            scopeMarkdown: ''
+        };
+
+        // API base URL
+        const API_BASE = '/v1/intake';
+
+        // Atualizar contador de caracteres e indicador de qualidade
+        document.getElementById('intakeText').addEventListener('input', (e) => {
+            const text = e.target.value;
+            document.getElementById('charCount').textContent = text.length;
+            
+            // Indicador de qualidade do texto
+            const quality = assessTextQuality(text);
+            const indicator = document.getElementById('qualityIndicator');
+            
+            if (text.length < 50) {
+                indicator.innerHTML = '<span style="color: var(--semantic-error);">Muito curto</span>';
+            } else if (quality < 0.3) {
+                indicator.innerHTML = '<span style="color: #f59e0b;">Adicione mais detalhes</span>';
+            } else if (quality < 0.6) {
+                indicator.innerHTML = '<span style="color: var(--primary-green);">Bom, pode melhorar</span>';
+            } else if (quality < 0.8) {
+                indicator.innerHTML = '<span style="color: var(--semantic-success);">Muito bom!</span>';
+            } else {
+                indicator.innerHTML = '<span style="color: var(--semantic-success);">Excelente!</span>';
+            }
+        });
+
+        // Contador para nota final
+        document.addEventListener('DOMContentLoaded', () => {
+            // Aguardar elemento existir
+            setTimeout(() => {
+                const finalNoteEl = document.getElementById('finalNote');
+                if (finalNoteEl) {
+                    finalNoteEl.addEventListener('input', (e) => {
+                        const countEl = document.getElementById('finalNoteCount');
+                        if (countEl) {
+                            countEl.textContent = e.target.value.length;
+                        }
+                    });
+                }
+            }, 1000);
+        });
+
+        // Função para avaliar qualidade do texto
+        function assessTextQuality(text) {
+            if (!text) return 0;
+            
+            let score = 0;
+            const lowerText = text.toLowerCase();
+            
+            // Comprimento adequado
+            if (text.length > 100) score += 0.2;
+            if (text.length > 300) score += 0.1;
+            if (text.length > 500) score += 0.1;
+            
+            // Palavras-chave importantes
+            const businessKeywords = ['objetivo', 'meta', 'problema', 'solução', 'necessidade', 'usuários', 'clientes'];
+            const technicalKeywords = ['sistema', 'aplicação', 'plataforma', 'integração', 'api', 'banco', 'dados'];
+            const contextKeywords = ['orçamento', 'prazo', 'cronograma', 'equipe', 'recursos'];
+            
+            businessKeywords.forEach(kw => {
+                if (lowerText.includes(kw)) score += 0.05;
+            });
+            
+            technicalKeywords.forEach(kw => {
+                if (lowerText.includes(kw)) score += 0.05;
+            });
+            
+            contextKeywords.forEach(kw => {
+                if (lowerText.includes(kw)) score += 0.05;
+            });
+            
+            // Estruturação (quebras de linha, listas)
+            if (text.includes('\n')) score += 0.1;
+            if (text.includes('•') || text.includes('-')) score += 0.1;
+            
+            // Especificidade (números, valores)
+            if (/\d/.test(text)) score += 0.1;
+            if (/r\$\s*\d/i.test(text)) score += 0.1; // Valores em reais
+            
+            return Math.min(1.0, score);
+        }
+
+        // Função para mostrar mensagem de status
+        function showStatus(message, type = 'success') {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${type} show`;
+            setTimeout(() => {
+                statusEl.classList.remove('show');
+            }, 5000);
+        }
+
+        // Função para atualizar barra de progresso
+        function updateProgress(percentage) {
+            document.getElementById('progressFill').style.width = `${percentage}%`;
+        }
+
+        // Exibir informações do projeto classificado (Sistema Universal V3.0)
+        function displayProjectInfo(data) {
+            const infoContainer = document.getElementById('project-info');
+            if (!infoContainer) {
+                // Criar container se não existir
+                const container = document.createElement('div');
+                container.id = 'project-info';
+                container.className = 'project-info-container';
+                container.innerHTML = `
+                    <div class="project-info-card">
+                        <h3>Análise Automática do Projeto</h3>
+                        <div class="project-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Tipo:</span>
+                                <span id="project-type" class="detail-value"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Complexidade:</span>
+                                <span id="project-complexity" class="detail-value"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Domínio:</span>
+                                <span id="project-domain" class="detail-value"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Completude:</span>
+                                <span id="project-completeness" class="detail-value"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Sistema:</span>
+                                <span id="system-version" class="detail-value"></span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Inserir após o header do wizard
+                const wizardStep = document.getElementById('step-wizard');
+                const firstChild = wizardStep.querySelector('.step-content') || wizardStep.firstElementChild;
+                wizardStep.insertBefore(container, firstChild);
+            }
+
+            // Atualizar valores
+            const classification = data.projectClassification || {};
+            const completeness = data.completenessAnalysis || {};
+            
+            document.getElementById('project-type').textContent = 
+                getProjectTypeDisplay(classification.type);
+            document.getElementById('project-complexity').textContent = 
+                getComplexityDisplay(classification.complexity);
+            document.getElementById('project-domain').textContent = 
+                getDomainDisplay(classification.domainContext);
+            document.getElementById('project-completeness').textContent = 
+                `${Math.round(completeness.score || 0)}%`;
+            document.getElementById('system-version').textContent = 
+                `V${data.engineVersion} ${data.isDynamicGeneration ? '(Dinâmico)' : '(Catálogo)'}`;
+        }
+
+        // Mapear tipos de projeto para display amigável
+        function getProjectTypeDisplay(type) {
+            const typeMap = {
+                'automation': 'Automação',
+                'website': 'Website',
+                'application': 'Aplicação',
+                'system': 'Sistema',
+                'platform': 'Plataforma',
+                'integration': 'Integração',
+                'content': 'Conteúdo',
+                'ecommerce': 'E-commerce',
+                'service': 'Serviço'
+            };
+            return typeMap[type] || `${type || 'unknown'}`;
+        }
+
+        // Mapear domínios para display amigável
+        function getDomainDisplay(domain) {
+            const domainMap = {
+                'fintech': 'Fintech',
+                'healthcare': 'Saúde',
+                'education': 'Educação', 
+                'ecommerce': 'E-commerce',
+                'industry': 'Indústria',
+                'real_estate': 'Imobiliário',
+                'automotive': 'Automotivo',
+                'gaming': 'Games',
+                'media': 'Mídia',
+                'legal': 'Jurídico',
+                'food_beverage': 'Food & Beverage',
+                'travel': 'Turismo',
+                'hr': 'RH',
+                'analytics': 'Analytics',
+                'security': 'Segurança',
+                'generic': 'Genérico'
+            };
+            return domainMap[domain] || `${domain || 'generic'}`;
+        }
+
+        // Mapear complexidade para display amigável
+        function getComplexityDisplay(complexity) {
+            const complexityMap = {
+                'simple': 'Simples',
+                'moderate': 'Moderado',
+                'complex': 'Complexo',
+                'enterprise': 'Enterprise'
+            };
+            return complexityMap[complexity] || `${complexity || 'moderate'}`;
+        }
+
+        // Gerar resumo diretamente (para briefings completos)
+        async function generateSummaryDirectly() {
+            try {
+                updateProgress(75);
+                
+                const summaryResponse = await fetch(`${API_BASE}/${state.sessionId}/summarize`, {
+                    method: 'POST'
+                });
+
+                if (!summaryResponse.ok) throw new Error('Erro ao gerar resumo');
+
+                const summaryData = await summaryResponse.json();
+                state.summary = summaryData.summary;
+
+                // Ir para step de resumo
+                document.getElementById('step-wizard').classList.remove('active');
+                document.getElementById('step-summary').classList.add('active');
+                
+                // Exibir resumo
+                document.getElementById('summaryContent').textContent = summaryData.summary;
+                
+                updateProgress(90);
+                showStatus('Resumo gerado automaticamente! Briefing estava suficientemente completo.', 'success');
+                
+            } catch (error) {
+                console.error('Erro ao gerar resumo:', error);
+                showStatus('Erro ao gerar resumo. Tente novamente.', 'error');
+            }
+        }
+
+        // Step 1: Submit Intake
+        async function submitIntake() {
+            const intakeText = document.getElementById('intakeText').value.trim();
+            
+            if (intakeText.length < 50) {
+                showStatus('Por favor, forneça uma descrição mais detalhada (mínimo 50 caracteres).', 'error');
+                return;
+            }
+
+            // Verificar qualidade mínima
+            const quality = assessTextQuality(intakeText);
+            if (quality < 0.2) {
+                showStatus('Para melhores resultados, adicione mais detalhes sobre objetivos, funcionalidades e contexto do projeto.', 'error');
+                return;
+            }
+
+            try {
+                // Mudar para step wizard
+                document.getElementById('step-intake').classList.remove('active');
+                document.getElementById('step-wizard').classList.add('active');
+                updateProgress(25);
+
+                // Chamar API
+                const response = await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: intakeText })
+                });
+
+                if (!response.ok) throw new Error('Erro ao criar sessão');
+
+                const data = await response.json();
+                state.sessionId = data.sessionId;
+                state.questionIds = data.questionIds;
+                
+                // Armazenar informações do sistema universal V3.0
+                state.projectClassification = data.projectClassification;
+                state.completenessAnalysis = data.completenessAnalysis;
+                state.isDynamicGeneration = data.isDynamicGeneration;
+                state.engineVersion = data.engineVersion;
+
+                // Exibir informações do projeto classificado
+                displayProjectInfo(data);
+
+                // Verificar se deve pular perguntas (briefing >90% completo)
+                if (data.completenessAnalysis?.skippedQuestions) {
+                    showStatus('Briefing completo detectado! Pulando perguntas desnecessárias...', 'success');
+                    // Ir direto para resumo
+                    await generateSummaryDirectly();
+                    return;
+                }
+
+                // Carregar detalhes das perguntas
+                await loadQuestions();
+
+            } catch (error) {
+                console.error('Erro:', error);
+                showStatus('Erro ao processar intake. Tente novamente.', 'error');
+                document.getElementById('step-wizard').classList.remove('active');
+                document.getElementById('step-intake').classList.add('active');
+            }
+        }
+
+        // Carregar perguntas selecionadas
+        async function loadQuestions() {
+            try {
+                const response = await fetch(`${API_BASE}/${state.sessionId}/questions`);
+                if (!response.ok) throw new Error('Erro ao carregar perguntas');
+
+                const data = await response.json();
+                
+                // Armazenar perguntas
+                data.questions.forEach(q => {
+                    state.questions[q.id] = q;
+                });
+
+                // Esconder loading, mostrar wizard
+                document.getElementById('loadingQuestions').style.display = 'none';
+                document.getElementById('wizardContent').style.display = 'block';
+
+                // Mostrar primeira pergunta
+                showQuestion(0);
+
+            } catch (error) {
+                console.error('Erro:', error);
+                showStatus('Erro ao carregar perguntas.', 'error');
+            }
+        }
+
+        // Mostrar pergunta atual
+        function showQuestion(index) {
+            const questionId = state.questionIds[index];
+            const question = state.questions[questionId];
+            
+            if (!question) return;
+
+            const container = document.getElementById('questionContainer');
+            container.innerHTML = '';
+
+            // Atualizar progresso das perguntas
+            document.getElementById('questionProgress').textContent = `${index + 1} de ${state.questionIds.length}`;
+            const progressPercent = ((index + 1) / state.questionIds.length) * 100;
+            document.getElementById('questionProgressBar').style.width = `${progressPercent}%`;
+
+            // Criar elemento da pergunta
+            const questionEl = document.createElement('div');
+            questionEl.className = 'question-container';
+            
+            // Texto da pergunta com melhor formatação
+            const textEl = document.createElement('div');
+            textEl.className = 'question-text';
+            textEl.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <span class="question-number">Pergunta ${index + 1} de ${state.questionIds.length}</span>
+                    <span style="background: #f0f0f0; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: normal; color: #666;">
+                        ${question.stage.toUpperCase()}
+                    </span>
+                </div>
+                <div style="font-size: 18px; line-height: 1.4;">${question.text}</div>
+            `;
+            questionEl.appendChild(textEl);
+
+            // Renderizar baseado no tipo
+            if (question.type === 'single_choice' || question.type === 'multi_choice') {
+                const optionsEl = document.createElement('div');
+                optionsEl.className = 'options';
+                
+                question.options.forEach(option => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-button';
+                    btn.textContent = option.label;
+                    btn.onclick = () => selectOption(questionId, option.id, question.type === 'multi_choice');
+                    
+                    // Marcar se já foi selecionado
+                    const currentAnswer = state.answers[questionId];
+                    if (question.type === 'single_choice' && currentAnswer === option.id) {
+                        btn.classList.add('selected');
+                    } else if (question.type === 'multi_choice' && Array.isArray(currentAnswer) && currentAnswer.includes(option.id)) {
+                        btn.classList.add('multi-selected');
+                    }
+                    
+                    optionsEl.appendChild(btn);
+                });
+                
+                questionEl.appendChild(optionsEl);
+                
+            } else if (question.type === 'text') {
+                const textarea = document.createElement('textarea');
+                textarea.id = `answer_${questionId}`;
+                textarea.placeholder = 'Digite sua resposta...';
+                textarea.value = state.answers[questionId] || '';
+                textarea.onchange = (e) => {
+                    state.answers[questionId] = e.target.value;
+                };
+                questionEl.appendChild(textarea);
+            }
+
+            container.appendChild(questionEl);
+
+            // Atualizar botões de navegação
+            document.getElementById('btnPrevious').disabled = index === 0;
+            document.getElementById('btnNext').textContent = 
+                index === state.questionIds.length - 1 ? 'Finalizar →' : 'Próxima →';
+
+            // Atualizar progresso
+            const progress = 25 + ((index + 1) / state.questionIds.length) * 50;
+            updateProgress(progress);
+        }
+
+        // Selecionar opção
+        function selectOption(questionId, optionId, isMulti) {
+            if (isMulti) {
+                // Multi-choice
+                if (!state.answers[questionId]) {
+                    state.answers[questionId] = [];
+                }
+                const index = state.answers[questionId].indexOf(optionId);
+                if (index > -1) {
+                    state.answers[questionId].splice(index, 1);
+                } else {
+                    state.answers[questionId].push(optionId);
+                }
+            } else {
+                // Single-choice
+                state.answers[questionId] = optionId;
+            }
+            
+            // Re-renderizar para atualizar visual
+            showQuestion(state.currentQuestionIndex);
+        }
+
+        // Navegação entre perguntas
+        function previousQuestion() {
+            if (state.currentQuestionIndex > 0) {
+                state.currentQuestionIndex--;
+                showQuestion(state.currentQuestionIndex);
+            }
+        }
+
+        async function nextQuestion() {
+            // Salvar resposta de text se houver
+            const questionId = state.questionIds[state.currentQuestionIndex];
+            const question = state.questions[questionId];
+            
+            if (question.type === 'text') {
+                const textarea = document.getElementById(`answer_${questionId}`);
+                if (textarea) {
+                    state.answers[questionId] = textarea.value;
+                }
+            }
+
+            // Verificar se é a última pergunta
+            if (state.currentQuestionIndex === state.questionIds.length - 1) {
+                // Enviar respostas e gerar resumo
+                await submitAnswersAndSummarize();
+            } else {
+                state.currentQuestionIndex++;
+                showQuestion(state.currentQuestionIndex);
+            }
+        }
+
+        // Enviar respostas e gerar resumo
+        async function submitAnswersAndSummarize() {
+            try {
+                // Preparar respostas
+                const answersArray = Object.entries(state.answers).map(([questionId, value]) => ({
+                    questionId,
+                    value
+                }));
+
+                // Enviar respostas
+                await fetch(`${API_BASE}/${state.sessionId}/answers`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ answers: answersArray })
+                });
+
+                // Mudar para step summary
+                document.getElementById('step-wizard').classList.remove('active');
+                document.getElementById('step-summary').classList.add('active');
+                updateProgress(75);
+
+                // Gerar resumo
+                const summaryResponse = await fetch(`${API_BASE}/${state.sessionId}/summarize`, {
+                    method: 'POST'
+                });
+
+                if (!summaryResponse.ok) throw new Error('Erro ao gerar resumo');
+
+                const summaryData = await summaryResponse.json();
+                
+                // Mostrar resumo
+                document.getElementById('loadingSummary').style.display = 'none';
+                document.getElementById('summaryContent').style.display = 'block';
+                document.getElementById('summaryText').innerHTML = marked.parse(summaryData.summary);
+
+            } catch (error) {
+                console.error('Erro:', error);
+                showStatus('Erro ao processar respostas.', 'error');
+            }
+        }
+
+        // Voltar ao wizard
+        function backToWizard() {
+            document.getElementById('step-summary').classList.remove('active');
+            document.getElementById('step-wizard').classList.add('active');
+            showQuestion(state.currentQuestionIndex);
+        }
+
+        // Gerar escopo final
+        async function generateScope() {
+            try {
+                const finalNote = document.getElementById('finalNote').value.trim();
+                
+                // Adicionar nota final se houver
+                if (finalNote) {
+                    await fetch(`${API_BASE}/${state.sessionId}/final-note`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: finalNote })
+                    });
+                }
+
+                // Mudar para step scope
+                document.getElementById('step-summary').classList.remove('active');
+                document.getElementById('step-scope').classList.add('active');
+                updateProgress(90);
+
+                // Gerar escopo
+                const scopeResponse = await fetch(`${API_BASE}/${state.sessionId}/scope`, {
+                    method: 'POST'
+                });
+
+                if (!scopeResponse.ok) throw new Error('Erro ao gerar escopo');
+
+                const scopeData = await scopeResponse.json();
+                state.scopeMarkdown = scopeData.scopeMd;
+                
+                // Mostrar escopo
+                document.getElementById('loadingScope').style.display = 'none';
+                document.getElementById('scopeContent').style.display = 'block';
+                document.getElementById('scopeDocument').innerHTML = marked.parse(state.scopeMarkdown);
+                
+                updateProgress(100);
+                showStatus('Escopo gerado com sucesso!', 'success');
+
+            } catch (error) {
+                console.error('Erro:', error);
+                showStatus('Erro ao gerar escopo.', 'error');
+            }
+        }
+
+        // Download do escopo
+        function downloadScope() {
+            const blob = new Blob([state.scopeMarkdown], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `escopo_projeto_${state.sessionId}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Reiniciar processo
+        function startOver() {
+            // Resetar estado
+            state = {
+                sessionId: null,
+                questionIds: [],
+                questions: {},
+                currentQuestionIndex: 0,
+                answers: {},
+                scopeMarkdown: ''
+            };
+            
+            // Limpar formulários
+            document.getElementById('intakeText').value = '';
+            document.getElementById('finalNote').value = '';
+            document.getElementById('charCount').textContent = '0';
+            
+            // Voltar ao início
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+            });
+            document.getElementById('step-intake').classList.add('active');
+            updateProgress(0);
+        }
+    </script>
+</body>
+</html>

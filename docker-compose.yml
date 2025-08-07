@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+  intelligent-intake:
+    build: .
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      # Core Configuration
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-3.5-turbo}
+      
+      # Storage Configuration
+      - USE_LOCAL_STORAGE=${USE_LOCAL_STORAGE:-true}
+      - USE_REDIS_CACHE=${USE_REDIS_CACHE:-false}
+      - REDIS_URL=redis://redis:6379
+      - LOCAL_STORAGE_PATH=/app/storage
+      - LOCAL_DOCUMENTS_PATH=/app/storage/documents
+      - LOCAL_SESSIONS_PATH=/app/storage/sessions
+      
+      # Intake Configuration
+      - MAX_QUESTIONS_PER_SELECTION=${MAX_QUESTIONS_PER_SELECTION:-15}
+      - ENABLE_CONTEXT_INFERENCE=${ENABLE_CONTEXT_INFERENCE:-true}
+      - ENABLE_SMART_FILTERING=${ENABLE_SMART_FILTERING:-true}
+      
+      # Multi-Agent Configuration
+      - ENABLE_MULTI_AGENT=${ENABLE_MULTI_AGENT:-false}
+      - CONSENSUS_THRESHOLD=${CONSENSUS_THRESHOLD:-0.7}
+      
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - .:/app
+      - ./storage:/app/storage
+    depends_on:
+      - redis
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  redis_data:
