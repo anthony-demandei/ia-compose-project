@@ -79,7 +79,7 @@ graph LR
 ## 📋 Pré-requisitos
 
 - **Python 3.11+**
-- **OpenAI API Key** (para geração de perguntas e documentação)
+- **Google Gemini API Key** (para geração de perguntas e documentação)
 - **Demandei API Key** (para autenticação)
 
 ---
@@ -104,7 +104,7 @@ cp .env.example .env
 
 # Edite as variáveis obrigatórias:
 DEMANDEI_API_KEY=your_fixed_api_key_for_demandei_platform
-OPENAI_API_KEY=your_openai_api_key_here
+GEMINI_API_KEY=AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos
 ENVIRONMENT=development
 ```
 
@@ -113,15 +113,15 @@ ENVIRONMENT=development
 ```env
 # API Keys (OBRIGATÓRIAS)
 DEMANDEI_API_KEY=your_demandei_api_key
-OPENAI_API_KEY=your_openai_api_key
+GEMINI_API_KEY=AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos
 
 # Configuração da Aplicação
 ENVIRONMENT=development
 DEBUG=true
 PORT=8001
 
-# OpenAI
-OPENAI_MODEL=gpt-4o-mini
+# Gemini
+GEMINI_MODEL=gemini-2.0-flash-exp
 
 # Armazenamento Local
 USE_LOCAL_STORAGE=true
@@ -135,7 +135,7 @@ LOCAL_STORAGE_PATH=./storage
 ### Desenvolvimento Local (Recomendado)
 ```bash
 export DEMANDEI_API_KEY=your_api_key
-export OPENAI_API_KEY=your_openai_key
+export GEMINI_API_KEY=AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos
 python main.py
 ```
 
@@ -587,7 +587,7 @@ Todos os erros seguem o padrão estruturado:
   "error_code": "QUESTION_GENERATION_FAILED",
   "message": "Failed to generate questions for project",
   "details": {
-    "error": "OpenAI API timeout"
+    "error": "Gemini API timeout"
   },
   "session_id": "sess_abc123def456"
 }
@@ -601,7 +601,7 @@ Todos os erros seguem o padrão estruturado:
 
 ```bash
 # Todos os testes
-DEMANDEI_API_KEY=test_key OPENAI_API_KEY=test_key python -m pytest tests/test_api_flows.py -v
+DEMANDEI_API_KEY=test_key python -m pytest tests/test_api_flows.py -v
 
 # Testes específicos
 pytest tests/test_api_flows.py::TestProjectTypes::test_healthcare_management_system -v
@@ -659,7 +659,7 @@ ia-compose-project/
 
 - **FastAPI** - Framework web moderno e rápido
 - **Pydantic v2** - Validação e serialização de dados
-- **OpenAI API** - Geração inteligente de perguntas
+- **Google Gemini API** - Geração inteligente de perguntas
 - **Uvicorn** - Servidor ASGI
 - **pytest** - Framework de testes
 - **Docker** - Containerização

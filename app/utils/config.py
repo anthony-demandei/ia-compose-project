@@ -6,16 +6,7 @@ class Settings(BaseSettings):
     # Environment
     environment: str = "development"
 
-    # AI Configuration
-    # Provider selection
-    ai_provider: str = "gemini"  # Options: "openai", "gemini"
-    
-    # OpenAI Configuration
-    openai_api_key: str = ""
-    openai_model: str = "gpt-3.5-turbo"  # Options: gpt-4, gpt-4o, gpt-4o-mini, gpt-3.5-turbo
-    ai_model: str = "gpt-3.5-turbo"  # Deprecated, use openai_model
-    
-    # Gemini Configuration
+    # AI Configuration - Gemini Only
     gemini_api_key: str = "AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos"  # Default key provided
     gemini_model: str = "gemini-2.0-flash-exp"  # Options: gemini-2.0-flash-exp, gemini-1.5-pro, gemini-1.5-flash
 
@@ -49,9 +40,6 @@ class Settings(BaseSettings):
     consensus_threshold: float = 0.7
     confidence_threshold: float = 0.6
 
-    # Embedding Configuration
-    embedding_model: str = "text-embedding-3-small"
-    classification_model: str = "gpt-3.5-turbo"  # For classification tasks
 
     # ZEP Memory Configuration
     zep_api_url: str = "https://api.getzep.com"

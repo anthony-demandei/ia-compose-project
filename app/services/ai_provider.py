@@ -115,16 +115,15 @@ class AIResponse:
     
 class AIProviderType(Enum):
     """Supported AI provider types."""
-    OPENAI = "openai"
     GEMINI = "gemini"
     
     
 def convert_messages_to_gemini_format(messages: List[Dict[str, Any]]) -> Tuple[str, List[Dict]]:
     """
-    Convert OpenAI message format to Gemini format.
+    Convert standard message format to Gemini format.
     
     Args:
-        messages: OpenAI-style messages with roles (system, user, assistant)
+        messages: Messages with roles (system, user, assistant)
         
     Returns:
         Tuple of (system_instruction, gemini_contents)
@@ -176,9 +175,9 @@ def convert_messages_to_gemini_format(messages: List[Dict[str, Any]]) -> Tuple[s
     return system_instruction, gemini_contents
 
 
-def convert_gemini_response_to_openai_format(gemini_response) -> str:
+def convert_gemini_response_to_standard_format(gemini_response) -> str:
     """
-    Convert Gemini response to OpenAI-like format.
+    Convert Gemini response to standard text format.
     
     Args:
         gemini_response: Response from Gemini API

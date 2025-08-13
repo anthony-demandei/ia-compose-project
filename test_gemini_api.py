@@ -13,7 +13,6 @@ os.environ["AI_PROVIDER"] = "gemini"
 os.environ["GEMINI_API_KEY"] = "AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos"
 os.environ["GEMINI_MODEL"] = "gemini-2.0-flash-exp"
 os.environ["DEMANDEI_API_KEY"] = "test_key"
-os.environ["OPENAI_API_KEY"] = "test_key"
 
 
 async def test_gemini_direct():
@@ -118,7 +117,7 @@ async def main():
         
         if total_success == 3:
             print("\n🎉 INTEGRAÇÃO GEMINI FUNCIONANDO PERFEITAMENTE!")
-            print("✅ Sistema migrado de OpenAI para Gemini com sucesso")
+            print("✅ Sistema usando Gemini com sucesso")
             print("✅ Todos os prompts e funções preservados")
             print("✅ API key configurada: AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos")
             print("✅ Modelo ativo: gemini-2.0-flash-exp")

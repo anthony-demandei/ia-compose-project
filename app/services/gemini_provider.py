@@ -13,7 +13,7 @@ from app.services.ai_provider import (
     AIProvider, 
     AIResponse, 
     convert_messages_to_gemini_format,
-    convert_gemini_response_to_openai_format
+    convert_gemini_response_to_standard_format
 )
 from app.utils.pii_safe_logging import get_pii_safe_logger
 
@@ -120,7 +120,7 @@ class GeminiProvider(AIProvider):
                 response = model.generate_content(gemini_contents[0]["parts"])
             
             # Extract text from response
-            text_response = convert_gemini_response_to_openai_format(response)
+            text_response = convert_gemini_response_to_standard_format(response)
             
             logger.debug(f"Generated response with {len(text_response)} characters")
             return text_response
@@ -220,7 +220,7 @@ class GeminiProvider(AIProvider):
                 response = model.generate_content(gemini_contents[0]["parts"])
             
             # Extract and parse JSON
-            text_response = convert_gemini_response_to_openai_format(response)
+            text_response = convert_gemini_response_to_standard_format(response)
             
             # Clean up the response (remove markdown if present)
             if text_response.startswith("```json"):
