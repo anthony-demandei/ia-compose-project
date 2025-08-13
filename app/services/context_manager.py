@@ -9,7 +9,6 @@ import time
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field, asdict
 from enum import Enum
-import redis.asyncio as redis
 from datetime import datetime
 
 from app.models.intake import IntakeSession

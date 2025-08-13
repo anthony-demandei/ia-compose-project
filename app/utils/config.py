@@ -32,11 +32,6 @@ class Settings(BaseSettings):
     local_documents_path: str = "./storage/documents"
     local_sessions_path: str = "./storage/sessions"
 
-    # Redis Configuration
-    redis_url: str = "redis://localhost:6379"
-    redis_password: str = ""
-    use_redis_cache: bool = False  # Default to False for local dev
-
     # API Configuration
     cors_origins: List[str] = ["http://localhost:3000", "http://localhost:8080"]
     max_session_duration: int = 3600  # 1 hour

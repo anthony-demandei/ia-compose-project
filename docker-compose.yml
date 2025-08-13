@@ -1,14 +1,6 @@
 version: '3.8'
 
 services:
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6380:6379"
-    command: redis-server --appendonly yes
-    volumes:
-      - redis_data:/data
-
   intelligent-intake:
     build: .
     ports:
@@ -16,13 +8,17 @@ services:
     environment:
       # Core Configuration
       - ENVIRONMENT=${ENVIRONMENT:-development}
+      - AI_PROVIDER=${AI_PROVIDER:-gemini}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_MODEL=${OPENAI_MODEL:-gpt-3.5-turbo}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.0-flash-exp}
+      
+      # API Authentication
+      - DEMANDEI_API_KEY=${DEMANDEI_API_KEY}
       
       # Storage Configuration
       - USE_LOCAL_STORAGE=${USE_LOCAL_STORAGE:-true}
-      - USE_REDIS_CACHE=${USE_REDIS_CACHE:-false}
-      - REDIS_URL=redis://redis:6379
       - LOCAL_STORAGE_PATH=/app/storage
       - LOCAL_DOCUMENTS_PATH=/app/storage/documents
       - LOCAL_SESSIONS_PATH=/app/storage/sessions
@@ -41,9 +37,4 @@ services:
     volumes:
       - .:/app
       - ./storage:/app/storage
-    depends_on:
-      - redis
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-
-volumes:
-  redis_data:
