@@ -1,14 +1,14 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 import uvicorn
 import os
 import logging
 from dotenv import load_dotenv
 
-from app.api.intake import router as intake_router  # Sistema de intake inteligente
-from app.api.multi_agent import router as multi_agent_router  # Sistema multi-agent
+from app.api.intake import router as intake_router  # Sistema de intake inteligente (legacy)
+from app.api.v1.project import router as project_router
+from app.api.v1.questions import router as questions_router  
+from app.api.v1.summary import router as summary_router
+from app.api.v1.documents import router as documents_router
 from app.utils.config import get_settings
 
 # Load environment variables
@@ -23,63 +23,112 @@ logger = logging.getLogger(__name__)
 # Get settings
 settings = get_settings()
 
-# Create FastAPI app
+# Create FastAPI app with comprehensive documentation
 app = FastAPI(
-    title="Intelligent Intake System",
-    description="AI-powered intake system for project requirements with multi-agent architecture",
-    version="2.0.0",
-)
-
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    title="IA Compose API",
+    description="""
+    🤖 **Microserviço REST para Análise Inteligente de Requisitos de Projetos**
+    
+    API desenvolvida exclusivamente para a **Plataforma Demandei**, utilizando IA para transformar 
+    descrições de projetos em documentação técnica completa e estruturada.
+    
+    ## 🔄 Workflow das 4 APIs
+    
+    1. **Project Analysis** - Analisa projeto e gera perguntas dinâmicas
+    2. **Questions Response** - Processa respostas e determina próximas perguntas  
+    3. **Summary Generation** - Gera resumo para confirmação do usuário
+    4. **Documents Generation** - Produz documentação técnica por stacks
+    
+    ## 🔐 Autenticação
+    
+    Todos os endpoints requerem Bearer Token com chave API da Demandei:
+    ```
+    Authorization: Bearer your_demandei_api_key
+    ```
+    
+    ## 📋 Formatos de Saída
+    
+    - **Perguntas**: Múltipla escolha com alternativas dinâmicas
+    - **Documentação**: Markdown separado por stacks (Frontend, Backend, Database, DevOps)
+    - **JSON estruturado**: Para fácil integração com plataforma Demandei
+    
+    ## 🏥 Health Checks
+    
+    Verificações de saúde disponíveis para monitoramento:
+    - `/health` - Status geral da API
+    - `/v1/{service}/health` - Status de cada serviço individual
+    """,
+    version="3.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_tags=[
+        {
+            "name": "Health",
+            "description": "Health checks e status da API"
+        },
+        {
+            "name": "project", 
+            "description": "🔍 **API 1**: Análise de Projetos - Classifica projeto e gera sequência de perguntas"
+        },
+        {
+            "name": "questions",
+            "description": "❓ **API 2**: Processamento de Respostas - Avalia respostas e retorna próximas perguntas"
+        },
+        {
+            "name": "summary", 
+            "description": "📝 **API 3**: Geração de Resumo - Cria resumo para confirmação e validação"
+        },
+        {
+            "name": "documents",
+            "description": "📄 **API 4**: Geração de Documentos - Produz documentação técnica final por stacks"
+        }
+    ],
+    contact={
+        "name": "Demandei Support",
+        "url": "https://demandei.com",
+        "email": "support@demandei.com"
+    },
+    license_info={
+        "name": "Proprietary License",
+        "url": "https://demandei.com/license"
+    }
 )
 
 # Include routers
-app.include_router(intake_router)  # Sistema de intake inteligente
-app.include_router(multi_agent_router)  # Sistema multi-agent para intake avançado
-
-# Serve static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Serve storage files (for local development)
-if settings.use_local_storage:
-    from pathlib import Path
-
-    storage_path = Path(settings.local_storage_path)
-    if storage_path.exists():
-        app.mount("/storage", StaticFiles(directory=str(storage_path)), name="storage")
+app.include_router(intake_router)  # Sistema de intake inteligente (legacy)
+app.include_router(project_router)  # API 1: Project Analysis
+app.include_router(questions_router)  # API 2: Questions Response
+app.include_router(summary_router)  # API 3: Summary Generation
+app.include_router(documents_router)  # API 4: Documents Generation
 
 
-@app.get("/")
-async def root():
-    """Serve the intake interface HTML page."""
-    return FileResponse("static/index.html")
-
-
-@app.get("/health")
+@app.get("/health", tags=["Health"], summary="Health Check Geral")
 async def health_check():
+    """
+    **Health Check principal da API**
+    
+    Retorna o status geral do sistema e informações de ambiente.
+    
+    **Não requer autenticação** - Endpoint público para monitoramento.
+    
+    Returns:
+        - status: "healthy" se a API está funcionando
+        - service: Nome do serviço
+        - environment: Ambiente atual (development/staging/production)
+    """
     return {
         "status": "healthy",
-        "service": "intelligent-intake",
+        "service": "ia-compose-api",
         "environment": settings.environment,
+        "version": "3.0.0"
     }
 
 
 @app.on_event("startup")
 async def startup_event():
-    logger.info("Intelligent Intake System iniciado")
+    logger.info("IA Compose API iniciado")
     logger.info(f"Ambiente: {settings.environment}")
     logger.info(f"Modelo OpenAI: {settings.openai_model}")
-    logger.info(
-        f"Context Inference: {'Enabled' if settings.enable_context_inference else 'Disabled'}"
-    )
-    logger.info(f"Smart Filtering: {'Enabled' if settings.enable_smart_filtering else 'Disabled'}")
-    logger.info(f"Multi-Agent: {'Enabled' if settings.enable_multi_agent else 'Disabled'}")
 
     # Criar diretórios de armazenamento local se necessário
     if settings.use_local_storage:
@@ -89,29 +138,12 @@ async def startup_event():
         Path(settings.local_documents_path).mkdir(exist_ok=True)
         Path(settings.local_sessions_path).mkdir(exist_ok=True)
 
-        # Criar diretórios para uploads
-        uploads_path = Path("storage/uploads")
-        uploads_path.mkdir(parents=True, exist_ok=True)
-
         logger.info(f"Armazenamento local configurado: {settings.local_storage_path}")
-        logger.info(f"Diretório de uploads criado: {uploads_path}")
-
-    # Inicializar Redis se habilitado
-    if settings.use_redis_cache:
-        try:
-            from app.services.redis_service import get_redis_service
-
-            redis_service = await get_redis_service()
-            if redis_service:
-                logger.info("Cache Redis inicializado")
-        except Exception as e:
-            logger.warning(f"Redis não disponível: {str(e)}")
-            logger.info("Continuando sem cache Redis")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    logger.info("Discovery Chat Microservice finalizado")
+    logger.info("IA Compose API finalizado")
 
 
 if __name__ == "__main__":

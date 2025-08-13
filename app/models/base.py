@@ -17,6 +17,20 @@ class SystemRole(str, Enum):
     AGENT = "agent"
 
 
+class DiscoveryStage(str, Enum):
+    """Stages in the discovery process"""
+    
+    BUSINESS_CONTEXT = "business_context"
+    USERS_AND_JOURNEYS = "users_and_journeys"
+    FUNCTIONAL_SCOPE = "functional_scope"
+    CONSTRAINTS_POLICIES = "constraints_policies"
+    NON_FUNCTIONAL = "non_functional"
+    TECH_PREFERENCES = "tech_preferences"
+    DELIVERY_BUDGET = "delivery_budget"
+    REVIEW_GAPS = "review_gaps"
+    FINALIZE_DOCS = "finalize_docs"
+
+
 class MessageSender(str, Enum):
     USER = "user"
     AI = "ai"
@@ -28,6 +42,14 @@ class ValidationResult(BaseModel):
     missing_items: List[str] = []
     suggestions: List[str] = []
     validated_data: Dict[str, Any] = {}
+
+
+class StageChecklist(BaseModel):
+    """Checklist for stage validation"""
+    stage: str
+    required_items: List[str] = []
+    optional_items: List[str] = []
+    min_completeness: float = 0.8
 
 
 class ErrorResponse(BaseModel):

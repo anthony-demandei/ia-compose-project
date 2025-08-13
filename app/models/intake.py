@@ -130,7 +130,7 @@ class QuestionSelectionResult(BaseModel):
     selection_metadata: Dict[str, Any] = Field(default_factory=dict)
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "selected_ids": ["Q_FUNC_TIPO", "Q_FINALIDADE", "Q_PAGTO_GATEWAY"],
                 "selection_metadata": {
@@ -171,7 +171,7 @@ class SummaryResponse(BaseModel):
     completion_percentage: float
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "summary": "## Resumo do Projeto\n\n**Objetivo:** E-commerce B2B...",
                 "ask_for_more": True,
@@ -190,7 +190,7 @@ class ScopeDocument(BaseModel):
     assumptions: List[str] = Field(default_factory=list)
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "content": "# Escopo do Projeto\n\n## 1. Objetivo de Negócio...",
                 "assumptions": [

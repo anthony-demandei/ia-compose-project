@@ -1,13 +1,13 @@
 from typing import Dict, List, Optional, Any
 import json
 import re
-from openai import AsyncOpenAI
 from app.models.base import DiscoveryStage, ValidationResult
 from app.models.session import DiscoverySession, Message
 from app.core.validation_engine import ValidationEngine
 from app.templates.system_prompts import DemandeiDiscoveryPO
 from app.utils.pii_safe_logging import get_pii_safe_logger
 from app.utils.token_optimizer import TokenOptimizer, optimize_messages_for_api
+from app.services.ai_factory import get_ai_provider
 
 logger = get_pii_safe_logger(__name__)
 
@@ -25,14 +25,17 @@ class AIProcessingEngine:
     faz perguntas de esclarecimento e extrai requisitos das conversas.
     """
 
-    def __init__(self, api_key: str, model: str = None):
+    def __init__(self, api_key: str = None, model: str = None):
         from app.utils.config import get_settings
 
         settings = get_settings()
-        self.client = AsyncOpenAI(api_key=api_key)
-        self.model = model or settings.openai_model
+        
+        # Usar o AIProvider factory ao invés de OpenAI diretamente
+        self.ai_provider = get_ai_provider()
+        self.model = model or self.ai_provider.get_model_name()
+        
         self.validation_engine = ValidationEngine()
-        self.token_optimizer = TokenOptimizer(model)
+        self.token_optimizer = TokenOptimizer(self.model)
 
         # Configurações de temperatura por tipo de operação
         self.temperatures = {
@@ -153,15 +156,12 @@ Score: {validation_result.completeness_score:.1%} | Faltando: {', '.join(validat
                     token_usage.optimization_savings,
                 )
 
-            # Chamar OpenAI com structured output quando necessário
-            response = await self.client.chat.completions.create(
-                model=self.model,
+            # Usar AIProvider ao invés de OpenAI diretamente
+            ai_content = await self.ai_provider.generate_response(
                 messages=optimized_messages,
                 temperature=self.temperatures["ideation"],
                 max_tokens=1000,
             )
-
-            ai_content = response.choices[0].message.content
 
             # Formatar perguntas numeradas se houver
             ai_content = self._format_numbered_questions(ai_content)
@@ -230,8 +230,7 @@ Score: {validation_result.completeness_score:.1%} | Faltando: {', '.join(validat
             Retorne apenas o JSON, sem explicações adicionais.
             """
 
-            response = await self.client.chat.completions.create(
-                model=self.model,
+            extracted_data = await self.ai_provider.generate_json_response(
                 messages=[
                     {
                         "role": "system",
@@ -242,8 +241,6 @@ Score: {validation_result.completeness_score:.1%} | Faltando: {', '.join(validat
                 temperature=self.temperatures["extraction"],
                 max_tokens=2000,
             )
-
-            extracted_data = json.loads(response.choices[0].message.content)
             return extracted_data
 
         except Exception as e:
@@ -422,8 +419,7 @@ Score: {validation_result.completeness_score:.1%} | Faltando: {', '.join(validat
                 Seja preciso e extraia apenas o que está explicitamente mencionado.
                 """
 
-            response = await self.client.chat.completions.create(
-                model=self.model,
+            extracted_data = await self.ai_provider.generate_json_response(
                 messages=[
                     {
                         "role": "system",
@@ -432,11 +428,8 @@ Score: {validation_result.completeness_score:.1%} | Faltando: {', '.join(validat
                     {"role": "user", "content": extraction_prompt},
                 ],
                 temperature=self.temperatures["extraction"],
-                response_format={"type": "json_object"},
                 max_tokens=500,
             )
-
-            extracted_data = json.loads(response.choices[0].message.content)
 
             # Atualizar requisitos da sessão
             if extracted_data:
@@ -553,8 +546,7 @@ Score: {validation_result.completeness_score:.1%} | Faltando: {', '.join(validat
                 collected_info=collected_info
             )
 
-            response = await self.client.chat.completions.create(
-                model=self.model,
+            validation_data = await self.ai_provider.generate_json_response(
                 messages=[
                     {
                         "role": "system",
@@ -563,11 +555,8 @@ Score: {validation_result.completeness_score:.1%} | Faltando: {', '.join(validat
                     {"role": "user", "content": validation_prompt},
                 ],
                 temperature=self.temperatures["validation"],
-                response_format={"type": "json_object"},
                 max_tokens=500,
             )
-
-            validation_data = json.loads(response.choices[0].message.content)
 
             return ValidationResult(
                 is_complete=validation_data.get("is_complete", False),
@@ -745,8 +734,9 @@ Score: {validation_result.completeness_score:.1%} | Faltando: {', '.join(validat
         self, messages: List[Dict], uploaded_files: List[Dict[str, Any]]
     ) -> List[Dict]:
         """
-        Prepara mensagens com conteúdo multimodal para OpenAI GPT-4 Vision.
+        Prepara mensagens com conteúdo multimodal para o AIProvider.
         Processa imagens, PDFs e documentos para incluir nas mensagens.
+        Suporta tanto OpenAI GPT-4 Vision quanto Gemini multimodal.
         """
         try:
             # Encontrar a última mensagem do usuário para adicionar conteúdo multimodal
@@ -771,7 +761,7 @@ Score: {validation_result.completeness_score:.1%} | Faltando: {', '.join(validat
                 processed_content = file_info.get("processed_content", {})
 
                 if file_type == "image":
-                    # Para imagens, usar GPT-4 Vision
+                    # Para imagens, usar formato multimodal compatível com ambos providers
                     image_url = file_info.get("processed_content", {}).get("base64_data")
                     if image_url:
                         multimodal_content.append(
