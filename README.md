@@ -121,7 +121,7 @@ DEBUG=true
 PORT=8001
 
 # Gemini
-GEMINI_MODEL=gemini-2.0-flash-exp
+GEMINI_MODEL=gemini-2.5-flash
 
 # Armazenamento Local
 USE_LOCAL_STORAGE=true

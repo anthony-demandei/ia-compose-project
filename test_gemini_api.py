@@ -11,7 +11,7 @@ import sys
 # Configurar para usar Gemini
 os.environ["AI_PROVIDER"] = "gemini"
 os.environ["GEMINI_API_KEY"] = "AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos"
-os.environ["GEMINI_MODEL"] = "gemini-2.0-flash-exp"
+os.environ["GEMINI_MODEL"] = "gemini-2.5-flash"
 os.environ["DEMANDEI_API_KEY"] = "test_key"
 
 
@@ -24,7 +24,7 @@ async def test_gemini_direct():
     
     provider = GeminiProvider(
         api_key="AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos",
-        model_name="gemini-2.0-flash-exp"
+        model_name="gemini-2.5-flash"
     )
     
     messages = [
@@ -46,7 +46,7 @@ async def test_gemini_json():
     
     provider = GeminiProvider(
         api_key="AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos",
-        model_name="gemini-2.0-flash-exp"
+        model_name="gemini-2.5-flash"
     )
     
     messages = [
@@ -120,7 +120,7 @@ async def main():
             print("✅ Sistema usando Gemini com sucesso")
             print("✅ Todos os prompts e funções preservados")
             print("✅ API key configurada: AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos")
-            print("✅ Modelo ativo: gemini-2.0-flash-exp")
+            print("✅ Modelo ativo: gemini-2.5-flash")
         else:
             print("\n⚠️  Alguns testes falharam, mas a integração básica funciona")
         

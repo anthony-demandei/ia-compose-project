@@ -41,7 +41,7 @@ class AIProviderFactory:
                 api_key = "AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos"
         
         if model_name is None:
-            model_name = os.getenv("GEMINI_MODEL", "gemini-2.0-flash-exp")
+            model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
         
         logger.info(f"Using Gemini provider with model: {model_name}")
         return GeminiProvider(api_key=api_key, model_name=model_name)

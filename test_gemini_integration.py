@@ -18,6 +18,7 @@ logger = get_pii_safe_logger(__name__)
 # Configurar para usar Gemini
 os.environ["AI_PROVIDER"] = "gemini"
 os.environ["GEMINI_API_KEY"] = "AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos"
+os.environ["GEMINI_MODEL"] = "gemini-2.5-flash"
 
 
 async def test_text_generation():

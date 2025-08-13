@@ -8,7 +8,7 @@ class Settings(BaseSettings):
 
     # AI Configuration - Gemini Only
     gemini_api_key: str = "AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos"  # Default key provided
-    gemini_model: str = "gemini-2.0-flash-exp"  # Options: gemini-2.0-flash-exp, gemini-1.5-pro, gemini-1.5-flash
+    gemini_model: str = "gemini-2.5-flash"  # Options: gemini-2.5-flash, gemini-2.0-flash-exp, gemini-1.5-pro
 
     # GCS Configuration (optional for local development)
     gcs_bucket_name: str = "test-bucket"

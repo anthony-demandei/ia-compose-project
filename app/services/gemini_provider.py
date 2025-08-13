@@ -23,13 +23,13 @@ logger = get_pii_safe_logger(__name__)
 class GeminiProvider(AIProvider):
     """Google Gemini AI provider implementation."""
     
-    def __init__(self, api_key: str, model_name: str = "gemini-2.0-flash-exp"):
+    def __init__(self, api_key: str, model_name: str = "gemini-2.5-flash"):
         """
         Initialize Gemini provider.
         
         Args:
             api_key: Google Gemini API key
-            model_name: Model name (gemini-2.0-flash-exp, gemini-1.5-pro, etc.)
+            model_name: Model name (gemini-2.5-flash, gemini-2.0-flash-exp, gemini-1.5-pro, etc.)
         """
         genai.configure(api_key=api_key)
         self.model_name = model_name
@@ -331,11 +331,12 @@ class GeminiProvider(AIProvider):
     
     def get_context_limit(self) -> int:
         """Get the context window limit for the current model."""
-        # Gemini 2.0 Flash context limits
+        # Gemini context limits
         context_limits = {
+            "gemini-2.5-flash": 1048576,      # 1M tokens
             "gemini-2.0-flash-exp": 1048576,  # 1M tokens
             "gemini-1.5-flash": 1048576,      # 1M tokens
             "gemini-1.5-pro": 2097152,        # 2M tokens
             "gemini-1.0-pro": 32768,          # 32k tokens
         }
-        return context_limits.get(self.model_name, 32768)  # Default to 32k
+        return context_limits.get(self.model_name, 1048576)  # Default to 1M
