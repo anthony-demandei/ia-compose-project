@@ -117,7 +117,27 @@ async def generate_documents_background(
         }
 
 
-@router.post("/generate/async")
+@router.post("/generate/async", 
+             summary="⚡ Geração Assíncrona de Documentos",
+             description="""
+             Inicia a geração de documentação em background (processamento assíncrono).
+             
+             **Vantagens:**
+             - ✅ Resposta imediata (não bloqueia o cliente)
+             - ✅ Processamento em background por até 3 minutos
+             - ✅ Permite verificar progresso via endpoint de status
+             - ✅ Ideal para projetos complexos
+             
+             **Cache:**
+             - Se documentos já existem em cache (24h), retorna imediatamente
+             - Caso contrário, inicia geração em background
+             
+             **Fluxo:**
+             1. POST /generate/async → Recebe URL de status
+             2. GET /status/{session_id} → Verifica progresso
+             3. Quando status = "completed" → Documentos prontos
+             """,
+             response_description="Status da geração com URL para verificação")
 async def generate_documents_async(
     request: DocumentGenerationRequest,
     background_tasks: BackgroundTasks,
@@ -208,7 +228,27 @@ async def generate_documents_async(
         )
 
 
-@router.get("/status/{session_id}")
+@router.get("/status/{session_id}",
+            summary="📊 Verificar Status da Geração",
+            description="""
+            Verifica o status da geração assíncrona de documentos.
+            
+            **Possíveis status:**
+            - 🔄 `processing`: Geração em andamento
+            - ✅ `completed`: Documentos prontos (retorna dados completos)
+            - ❌ `failed`: Erro na geração (retorna mensagem de erro)
+            - 🔍 `not_found`: Nenhum processo encontrado para esta sessão
+            
+            **Cache:**
+            - Se documentos estão em cache, retorna imediatamente com status "completed"
+            - Cache válido por 24 horas após geração
+            
+            **Exemplo de uso:**
+            ```
+            GET /v1/documents/status/sess_abc123def456
+            ```
+            """,
+            response_description="Status atual da geração com dados se concluído")
 async def get_generation_status(
     session_id: str,
     authenticated: bool = Depends(verify_demandei_api_key)

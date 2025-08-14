@@ -30,7 +30,39 @@ from app.services.document_generator import DocumentGeneratorService
 from app.services.redis_cache import get_redis_cache
 
 
-@router.post("/generate", response_model=DocumentGenerationResponse)
+@router.post("/generate", 
+             response_model=DocumentGenerationResponse,
+             summary="📄 Geração Síncrona de Documentos",
+             description="""
+             Gera documentação técnica completa separada por stacks tecnológicos.
+             
+             **API 4 do workflow** - Última etapa do processo de análise.
+             
+             **Características:**
+             - 🔄 Processamento síncrono (aguarda conclusão)
+             - ⏱️ Timeout de 3 minutos
+             - 💾 Cache de 24 horas (retorna instantaneamente se já gerado)
+             - 📚 Documentação separada por stacks
+             
+             **Stacks gerados:**
+             - Frontend (React, Vue, Angular, etc.)
+             - Backend (Node.js, Python, Java, etc.)
+             - Database (PostgreSQL, MongoDB, Redis, etc.)
+             - DevOps (Docker, AWS, CI/CD, etc.)
+             
+             **Pré-requisitos:**
+             - Session deve existir
+             - Summary deve estar confirmado (`/v1/summary/confirm`)
+             
+             **Para projetos complexos:**
+             Use `/v1/documents/generate/async` para evitar timeout
+             """,
+             responses={
+                 200: {"description": "Documentação gerada com sucesso"},
+                 404: {"description": "Sessão não encontrada"},
+                 400: {"description": "Resumo não confirmado"},
+                 504: {"description": "Timeout (use async para projetos grandes)"}
+             })
 async def generate_documents(
     request: DocumentGenerationRequest,
     authenticated: bool = Depends(verify_demandei_api_key)
