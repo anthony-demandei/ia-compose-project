@@ -5,8 +5,8 @@ Provides fixed API key validation for the IA Compose API.
 
 from fastapi import HTTPException, Security, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-import os
 from typing import Optional
+from app.utils.config import get_settings
 
 # Initialize HTTP Bearer token security with auto_error=False to handle missing credentials
 security = HTTPBearer(auto_error=False)
@@ -16,9 +16,10 @@ class APIKeyAuth:
     """API Key authentication handler for Demandei platform."""
     
     def __init__(self):
-        self.api_key = os.getenv("DEMANDEI_API_KEY")
-        if not self.api_key:
-            raise ValueError("DEMANDEI_API_KEY environment variable not set")
+        settings = get_settings()
+        self.api_key = settings.demandei_api_key
+        if not self.api_key or self.api_key == "your_demandei_api_key_here":
+            raise ValueError("DEMANDEI_API_KEY environment variable not properly configured")
     
     def verify_api_key(self, credentials: Optional[HTTPAuthorizationCredentials] = Security(security)) -> bool:
         """

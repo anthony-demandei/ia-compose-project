@@ -16,6 +16,7 @@ from collections import defaultdict
 
 from app.models.api_models import Question
 from app.utils.pii_safe_logging import get_pii_safe_logger
+from app.utils.config import get_settings
 
 logger = get_pii_safe_logger(__name__)
 
@@ -56,20 +57,21 @@ class QuestionCache:
     def __init__(
         self, 
         max_entries: int = 1000,
-        ttl_seconds: int = 3600,  # 1 hour
-        similarity_threshold: float = 0.7
+        ttl_seconds: int = None,
+        similarity_threshold: float = None
     ):
         """
         Initialize question cache.
         
         Args:
             max_entries: Maximum cache entries
-            ttl_seconds: Time-to-live for entries
-            similarity_threshold: Minimum similarity for cache hits
+            ttl_seconds: Time-to-live for entries (uses config if None)
+            similarity_threshold: Minimum similarity for cache hits (uses config if None)
         """
+        settings = get_settings()
         self.max_entries = max_entries
-        self.ttl_seconds = ttl_seconds
-        self.similarity_threshold = similarity_threshold
+        self.ttl_seconds = ttl_seconds or settings.question_cache_ttl_seconds
+        self.similarity_threshold = similarity_threshold or settings.question_similarity_threshold
         
         # Cache storage
         self.cache: Dict[str, CacheEntry] = {}

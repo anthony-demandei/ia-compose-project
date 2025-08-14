@@ -3,60 +3,63 @@ from typing import List
 
 
 class Settings(BaseSettings):
-    # Environment
+    # Core Environment
     environment: str = "development"
+    debug: bool = False
+    host: str = "0.0.0.0"
+    port: int = 8001
 
-    # AI Configuration - Gemini Only
-    gemini_api_key: str = "AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos"  # Default key provided
-    gemini_model: str = "gemini-2.5-flash"  # Options: gemini-2.5-flash, gemini-2.0-flash-exp, gemini-1.5-pro
+    # Authentication - Demandei API Key (REQUIRED)
+    demandei_api_key: str = "your_demandei_api_key_here"
 
-    # GCS Configuration (optional for local development)
-    gcs_bucket_name: str = "test-bucket"
-    gcs_credentials_path: str = "./gcp-credentials.json"
+    # AI Configuration - Google Gemini Only
+    gemini_api_key: str = "AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos"
+    gemini_model: str = "gemini-2.0-flash-exp"  # Options: gemini-2.5-flash, gemini-2.0-flash-exp, gemini-1.5-flash, gemini-1.5-pro
 
-    # Firestore Configuration (optional for local development)
-    firestore_project_id: str = "test-project"
+    # Document Generation Configuration
+    doc_min_lines_per_stack: int = 500
+    doc_max_generation_attempts: int = 3
+    doc_generation_temperature: float = 0.8
+    doc_generation_max_tokens: int = 8000
 
-    # Local Storage Configuration
+    # Question Engine Configuration
+    question_max_per_selection: int = 15
+    question_similarity_threshold: float = 0.7
+    question_cache_ttl_seconds: int = 3600
+    question_generation_temperature: float = 0.5
+    question_generation_max_tokens: int = 2048
+
+    # Storage Configuration
     use_local_storage: bool = True
     local_storage_path: str = "./storage"
     local_documents_path: str = "./storage/documents"
     local_sessions_path: str = "./storage/sessions"
 
+    # Session Management
+    max_session_duration: int = 3600  # 1 hour in seconds
+    session_cleanup_interval: int = 300  # 5 minutes
+
     # API Configuration
-    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:8080"]
-    max_session_duration: int = 3600  # 1 hour
+    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:8080", "http://localhost:8000"]
+    max_request_size: int = 10485760  # 10MB
+    request_timeout: int = 120  # 2 minutes
 
-    # JWT Configuration
-    jwt_secret_key: str = "your-secret-key-change-in-production"
-    jwt_algorithm: str = "HS256"
-
-    # Logging
+    # Logging Configuration
     log_level: str = "INFO"
+    enable_pii_safe_logging: bool = True
+    log_file_path: str = "./logs/app.log"
+    log_rotation_size: str = "10MB"
+    log_retention_days: int = 30
 
-    # Multi-Agent Configuration
-    enable_multi_agent: bool = False
-    agent_coordination_mode: str = "collaborative"
-    consensus_threshold: float = 0.7
-    confidence_threshold: float = 0.6
+    # Performance Configuration
+    enable_response_compression: bool = True
+    enable_request_validation: bool = True
+    max_concurrent_requests: int = 100
 
-
-    # ZEP Memory Configuration
-    zep_api_url: str = "https://api.getzep.com"
-    zep_project_key: str = "z_1dWlkIjoiODcwZTQ0M2UtNDgyYi00MTllLTg2OGYtNDNiYTI3N2ExYWUyIn0.aVB7DnD8hmzrQZsPKY_Egv4H5ZxhOL9cDZnBjR0KiC9NBxCqzB1wV7Nt_WV08ZJ2YHEVOLUZKMNnCMgN_E6Ikw"
-    zep_account_id: str = "f6c33da2-03f8-4589-9fe7-2b3cc7a570f7"
-    enable_zep_memory: bool = True
-
-    # Universal User Configuration
-    zep_universal_user_id: str = "demandei_universal_user"
-    zep_universal_user_email: str = "system@demandei.com"
-    zep_universal_user_name: str = "Demandei System"
-
-    # Question Selection Configuration
-    max_questions_per_selection: int = 15
-    similarity_threshold: float = 0.7
-    enable_context_inference: bool = True
-    enable_smart_filtering: bool = True
+    # Cloud Storage Configuration (Optional - for production)
+    gcs_bucket_name: str = ""
+    gcs_credentials_path: str = ""
+    firestore_project_id: str = ""
 
     model_config = {"env_file": ".env", "case_sensitive": False, "extra": "ignore"}
 

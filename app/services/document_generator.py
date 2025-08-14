@@ -11,14 +11,7 @@ from datetime import datetime
 from app.models.api_models import StackDocumentation
 from app.services.ai_factory import get_ai_provider
 from app.utils.pii_safe_logging import get_pii_safe_logger
-from app.prompts.documentation_prompts import (
-    get_frontend_requirements,
-    get_backend_requirements,
-    get_database_requirements,
-    get_devops_requirements,
-    get_complete_prompt_template,
-    get_expansion_prompt
-)
+from app.utils.config import get_settings
 
 logger = get_pii_safe_logger(__name__)
 
@@ -29,9 +22,10 @@ class DocumentGeneratorService:
     def __init__(self):
         """Initialize the document generator service with AI provider."""
         self.ai_provider = get_ai_provider()
-        self.min_lines_per_stack = 500  # Minimum lines of code per stack
-        self.max_generation_attempts = 3  # Maximum attempts to generate sufficient content
-        logger.info("Document Generator Service initialized with Gemini AI (500+ lines/stack)")
+        self.settings = get_settings()
+        self.min_lines_per_stack = self.settings.doc_min_lines_per_stack
+        self.max_generation_attempts = self.settings.doc_max_generation_attempts
+        logger.info(f"Document Generator Service initialized with Gemini AI ({self.min_lines_per_stack}+ lines/stack)")
     
     async def generate_documents(self, session_data: Dict[str, Any], include_implementation: bool = True) -> List[StackDocumentation]:
         """
@@ -91,8 +85,8 @@ class DocumentGeneratorService:
                         },
                         {"role": "user", "content": prompt}
                     ],
-                    temperature=0.8,  # Higher temperature for more detailed content
-                    max_tokens=16000,  # Increased from 8000 to accommodate more content
+                    temperature=self.settings.doc_generation_temperature,
+                    max_tokens=self.settings.doc_generation_max_tokens * 2,  # Double for comprehensive generation
                     fallback_model="gemini-1.5-pro"  # Use Pro as fallback
                 )
                 
@@ -130,22 +124,28 @@ class DocumentGeneratorService:
             if lines < self.min_lines_per_stack:
                 logger.info(f"Expanding {stack.stack_type}: {lines} -> {self.min_lines_per_stack}+ lines")
                 
-                # Generate expansion prompt
-                expansion_prompt = get_expansion_prompt(
-                    stack.stack_type,
-                    stack.content,
-                    lines
-                )
+                # Generate free-form expansion prompt
+                missing_lines = self.min_lines_per_stack - lines
+                expansion_prompt = f"""
+The {stack.stack_type} documentation currently has {lines} lines but needs {self.min_lines_per_stack}+ lines.
+
+Current content preview:
+{stack.content[:500]}...
+
+Please generate {missing_lines}+ additional lines of relevant technical documentation for the {stack.stack_type} stack. 
+Focus on architectural explanations, configuration details, implementation guides, and best practices.
+DO NOT include code snippets - focus on documentation and explanations.
+"""
                 
                 try:
                     # Request additional content
                     expansion_response = await self.ai_provider.generate_response(
                         messages=[
-                            {"role": "system", "content": "Generate additional technical code to expand the documentation."},
+                            {"role": "system", "content": "You are a technical documentation expert. Generate comprehensive technical documentation without code snippets."},
                             {"role": "user", "content": expansion_prompt}
                         ],
-                        temperature=0.8,
-                        max_tokens=8000
+                        temperature=self.settings.doc_generation_temperature,
+                        max_tokens=self.settings.doc_generation_max_tokens
                     )
                     
                     # Append additional content
@@ -159,61 +159,105 @@ class DocumentGeneratorService:
         return enhanced_stacks
     
     def _create_enhanced_documentation_prompt(self, context: Dict[str, Any], include_implementation: bool) -> str:
-        """Create enhanced prompt with detailed requirements for each stack."""
+        """Create free-form documentation prompt based on project context."""
         
-        # Get the base template
-        template = get_complete_prompt_template()
+        # Build comprehensive project context
+        project_description = context.get('project_description', 'Software project')
+        classification = context.get('classification', {})
+        requirements = context.get('requirements', {})
         
-        # Build project context
-        project_context = f"""
-PROJECT DETAILS:
-{context['project_description']}
+        prompt = f"""You are a senior software architect and technical documentation expert. 
 
-PROJECT TYPE: {context['classification'].get('type', 'system')}
-COMPLEXITY: {context['classification'].get('complexity', 'moderate')}
-KEY TECHNOLOGIES: {', '.join(context['classification'].get('key_technologies', []))}
+PROJECT CONTEXT:
+{project_description}
+
+PROJECT DETAILS:
+- Type: {classification.get('type', 'application')}
+- Complexity: {classification.get('complexity', 'moderate')}
+- Domain: {classification.get('domain', 'general')}
+- Technologies: {', '.join(classification.get('key_technologies', ['modern web stack']))}
 
 REQUIREMENTS:
-- PLATFORMS: {', '.join(context['requirements']['platforms']) if context['requirements']['platforms'] else 'Web, Mobile'}
-- INTEGRATIONS: {', '.join(context['requirements']['integrations']) if context['requirements']['integrations'] else 'REST APIs, Webhooks'}
-- COMPLIANCE: {', '.join(context['requirements']['compliance']) if context['requirements']['compliance'] else 'LGPD, Security Best Practices'}
-- PERFORMANCE: {context['requirements']['performance'].get('sla', 'High Availability 99.9%')}
+- Platforms: {', '.join(requirements.get('platforms', ['web']))}
+- Integrations: {', '.join(requirements.get('integrations', ['REST APIs']))}
+- Compliance: {', '.join(requirements.get('compliance', ['security best practices']))}
+- Performance: {requirements.get('performance', {}).get('sla', 'high availability')}
 
-DETAILED REQUIREMENTS FOR EACH STACK:
+TASK: Generate comprehensive technical documentation for 4 technology stacks: frontend, backend, database, and devops.
 
-FRONTEND (500+ lines):
-{get_frontend_requirements()}
+For each stack, provide:
+1. Architecture overview and design patterns
+2. Technology choices and justifications
+3. Implementation approach and methodology
+4. Configuration and deployment considerations
+5. Security measures and best practices
+6. Performance optimization strategies
+7. Monitoring and maintenance procedures
+8. Documentation and team guidelines
 
-BACKEND (500+ lines):
-{get_backend_requirements()}
+IMPORTANT GUIDELINES:
+- Generate at least {self.min_lines_per_stack} lines of documentation per stack
+- Focus on DOCUMENTATION and EXPLANATIONS, not code snippets
+- Provide architectural guidance and best practices
+- Include rationale for technology choices
+- Cover operational aspects (deployment, monitoring, maintenance)
+- Be specific to the project context provided
+- Use clear, professional technical writing
 
-DATABASE (500+ lines):
-{get_database_requirements()}
-
-DEVOPS (500+ lines):
-{get_devops_requirements()}
-"""
-        
-        # Fill the template
-        prompt = template.replace("{project_context}", project_context)
+Return the response as a JSON object with this exact structure:
+{{
+  "frontend": {{
+    "title": "Frontend Architecture & Implementation Guide",
+    "content": "[DETAILED DOCUMENTATION HERE]",
+    "technologies": ["technology1", "technology2", "..."],
+    "estimated_effort": "X-Y weeks"
+  }},
+  "backend": {{
+    "title": "Backend Architecture & Implementation Guide", 
+    "content": "[DETAILED DOCUMENTATION HERE]",
+    "technologies": ["technology1", "technology2", "..."],
+    "estimated_effort": "X-Y weeks"
+  }},
+  "database": {{
+    "title": "Database Architecture & Implementation Guide",
+    "content": "[DETAILED DOCUMENTATION HERE]",
+    "technologies": ["technology1", "technology2", "..."],
+    "estimated_effort": "X-Y weeks"
+  }},
+  "devops": {{
+    "title": "DevOps & Infrastructure Implementation Guide",
+    "content": "[DETAILED DOCUMENTATION HERE]",
+    "technologies": ["technology1", "technology2", "..."],
+    "estimated_effort": "X-Y weeks"
+  }}
+}}"""
         
         return prompt
     
     def _enhance_prompt_for_retry(self, original_prompt: str, current_lines: int) -> str:
-        """Enhance prompt for retry attempt to get more content."""
+        """Enhance prompt for retry attempt to get more comprehensive documentation."""
         
-        missing_lines = (self.min_lines_per_stack * 4) - current_lines
+        target_lines = self.min_lines_per_stack * 4
+        missing_lines = target_lines - current_lines
         
         enhancement = f"""
-IMPORTANT: The previous generation only produced {current_lines} lines total.
-You MUST generate {missing_lines} MORE lines of ACTUAL CODE.
 
-Requirements:
-- DO NOT use placeholders like "// ... more code here"
-- DO NOT use comments to describe what should be done
-- WRITE the actual, complete, executable code
-- Include FULL implementations, not snippets
-- Add more files, more functions, more configurations
+CRITICAL: The previous generation only produced {current_lines} lines total, but we need {target_lines}+ lines.
+You MUST generate {missing_lines} MORE lines of detailed technical documentation.
+
+Enhanced Requirements:
+- Expand each section with more detailed explanations
+- Add more subsections and topics
+- Include more comprehensive architectural guidance
+- Provide more detailed implementation strategies
+- Add extensive configuration examples and explanations
+- Include detailed security considerations
+- Expand on performance optimization techniques
+- Add comprehensive monitoring and operational guidance
+- Include detailed troubleshooting sections
+- Provide extensive best practices and guidelines
+
+Focus on DOCUMENTATION DEPTH, not code snippets.
 """
         
         return original_prompt + enhancement

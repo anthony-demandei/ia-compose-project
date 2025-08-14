@@ -15,6 +15,7 @@ from app.models.api_models import Question, QuestionChoice
 from app.services.ai_factory import get_ai_provider
 from app.services.question_cache import get_question_cache
 from app.utils.pii_safe_logging import get_pii_safe_logger
+from app.utils.config import get_settings
 
 logger = get_pii_safe_logger(__name__)
 
@@ -133,6 +134,7 @@ class AIQuestionAgent:
     def __init__(self):
         """Initialize the AI Question Agent."""
         self.ai_provider = get_ai_provider()
+        self.settings = get_settings()
         self.system_prompt = self._create_system_prompt()
         self.cache = get_question_cache()
         
@@ -214,8 +216,8 @@ Responda SEMPRE E SOMENTE com um objeto JSON que siga o schema fornecido. Não i
             # A chamada é agora muito mais confiável com JSON nativo
             response_json = await self.ai_provider.generate_json_response(
                 messages=messages,
-                temperature=0.5,  # Temperatura mais baixa para consistência
-                max_tokens=2048
+                temperature=self.settings.question_generation_temperature,
+                max_tokens=self.settings.question_generation_max_tokens
             )
 
             # Verificação de erro simplificada

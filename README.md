@@ -642,8 +642,6 @@ ia-compose-project/
 │   │   └── auth.py                # Autenticação Bearer Token
 │   ├── models/
 │   │   └── api_models.py          # Modelos Pydantic
-│   ├── prompts/
-│   │   └── documentation_prompts.py # Prompts IA para documentação
 │   ├── services/                   # 8 serviços ultra-lean
 │   │   ├── ai_factory.py          # Factory para providers IA
 │   │   ├── ai_provider.py         # Interface abstrata IA
