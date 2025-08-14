@@ -48,7 +48,14 @@ services:
       # AI CONFIGURATION - GOOGLE GEMINI
       # =============================================================================
       GEMINI_API_KEY: ${GEMINI_API_KEY:-AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos}
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash-exp}
+      
+      # Primary, Fallback, and Last Resort Model Configuration
+      GEMINI_PRIMARY_MODEL: ${GEMINI_PRIMARY_MODEL:-gemini-1.5-pro}
+      GEMINI_FALLBACK_MODEL: ${GEMINI_FALLBACK_MODEL:-gemini-1.5-flash}
+      GEMINI_LAST_RESORT_MODEL: ${GEMINI_LAST_RESORT_MODEL:-gemini-2.0-flash-exp}
+      
+      # Legacy model field for backward compatibility
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-1.5-pro}
 
       # =============================================================================
       # DOCUMENT GENERATION SETTINGS
@@ -112,14 +119,47 @@ services:
       # =============================================================================
       # REDIS CACHE CONFIGURATION
       # =============================================================================
+      ENABLE_REDIS_CACHE: ${ENABLE_REDIS_CACHE:-true}
+      
+      # Redis connection settings (Docker setup)
       REDIS_HOST: redis  # Always use 'redis' hostname in Docker
       REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_DB: ${REDIS_DB:-0}
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_USERNAME: ${REDIS_USERNAME:-}
+      
+      # Redis URL alternative (leave empty to use individual settings above)
+      REDIS_URL: ${REDIS_URL:-}
+      
+      # Redis SSL Configuration (usually disabled for local Docker)
+      REDIS_SSL: ${REDIS_SSL:-false}
+      REDIS_SSL_CERT_REQS: ${REDIS_SSL_CERT_REQS:-required}
+      REDIS_SSL_CA_CERTS: ${REDIS_SSL_CA_CERTS:-}
+      REDIS_SSL_CERTFILE: ${REDIS_SSL_CERTFILE:-}
+      REDIS_SSL_KEYFILE: ${REDIS_SSL_KEYFILE:-}
+      
+      # Redis Connection Pool Settings
+      REDIS_MAX_CONNECTIONS: ${REDIS_MAX_CONNECTIONS:-10}
+      REDIS_RETRY_ON_TIMEOUT: ${REDIS_RETRY_ON_TIMEOUT:-true}
+      REDIS_HEALTH_CHECK_INTERVAL: ${REDIS_HEALTH_CHECK_INTERVAL:-30}
+      REDIS_CONNECTION_TIMEOUT: ${REDIS_CONNECTION_TIMEOUT:-5}
+      REDIS_SOCKET_TIMEOUT: ${REDIS_SOCKET_TIMEOUT:-5}
+      
+      # Cache TTL settings (in seconds)
       REDIS_TTL_QUESTIONS: ${REDIS_TTL_QUESTIONS:-3600}
       REDIS_TTL_DOCUMENTS: ${REDIS_TTL_DOCUMENTS:-86400}
-      REDIS_MAX_CONNECTIONS: ${REDIS_MAX_CONNECTIONS:-10}
-      ENABLE_REDIS_CACHE: ${ENABLE_REDIS_CACHE:-true}
+      REDIS_TTL_SESSIONS: ${REDIS_TTL_SESSIONS:-7200}
+      
+      # Redis Fallback Configuration
+      REDIS_ENABLE_FALLBACK: ${REDIS_ENABLE_FALLBACK:-true}
+      REDIS_FALLBACK_TIMEOUT: ${REDIS_FALLBACK_TIMEOUT:-2}
+
+      # =============================================================================
+      # DEVELOPMENT SETTINGS
+      # =============================================================================
+      DEV_AUTO_RELOAD: ${DEV_AUTO_RELOAD:-false}  # Disable in Docker for stability
+      DEV_DETAILED_ERRORS: ${DEV_DETAILED_ERRORS:-true}
+      DEV_LOG_REQUESTS: ${DEV_LOG_REQUESTS:-false}
 
     volumes:
       # Persistent storage for documents and sessions

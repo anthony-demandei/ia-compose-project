@@ -48,36 +48,87 @@ class RedisCache:
             self._init_connection()
     
     def _init_connection(self):
-        """Initialize Redis connection pool."""
+        """Initialize Redis connection pool with comprehensive configuration."""
         try:
+            # Build connection parameters
+            connection_params = self._build_connection_params()
+            
             # Create connection pool for async operations
-            self._redis_client = aioredis.Redis(
-                host=self.settings.redis_host,
-                port=self.settings.redis_port,
-                db=self.settings.redis_db,
-                password=self.settings.redis_password if self.settings.redis_password else None,
-                decode_responses=True,
-                max_connections=self.settings.redis_max_connections
-            )
+            self._redis_client = aioredis.Redis(**connection_params)
             
             # Create sync client for initialization checks
-            self._sync_redis_client = redis.Redis(
-                host=self.settings.redis_host,
-                port=self.settings.redis_port,
-                db=self.settings.redis_db,
-                password=self.settings.redis_password if self.settings.redis_password else None,
-                decode_responses=True,
-                socket_connect_timeout=5
-            )
+            sync_params = connection_params.copy()
+            sync_params['socket_connect_timeout'] = self.settings.redis_connection_timeout
+            self._sync_redis_client = redis.Redis(**sync_params)
             
             # Test connection
             self._sync_redis_client.ping()
             self._connected = True
-            logger.info(f"✅ Redis cache connected to {self.settings.redis_host}:{self.settings.redis_port}")
             
-        except (RedisError, ConnectionError) as e:
-            logger.warning(f"⚠️ Redis connection failed, using in-memory cache: {e}")
+            connection_info = self._get_connection_info()
+            logger.info(f"✅ Redis cache connected: {connection_info}")
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Redis connection failed, using in-memory cache: {str(e)}")
             self._connected = False
+    
+    def _build_connection_params(self) -> Dict[str, Any]:
+        """Build Redis connection parameters from settings."""
+        # If Redis URL is provided, parse it
+        if self.settings.redis_url:
+            return {
+                "url": self.settings.redis_url,
+                "decode_responses": True,
+                "max_connections": self.settings.redis_max_connections,
+                "retry_on_timeout": self.settings.redis_retry_on_timeout,
+                "health_check_interval": self.settings.redis_health_check_interval,
+                "socket_timeout": self.settings.redis_socket_timeout
+            }
+        
+        # Build from individual parameters
+        params = {
+            "host": self.settings.redis_host,
+            "port": self.settings.redis_port,
+            "db": self.settings.redis_db,
+            "decode_responses": True,
+            "max_connections": self.settings.redis_max_connections,
+            "retry_on_timeout": self.settings.redis_retry_on_timeout,
+            "health_check_interval": self.settings.redis_health_check_interval,
+            "socket_timeout": self.settings.redis_socket_timeout
+        }
+        
+        # Add authentication if provided
+        if self.settings.redis_password:
+            params["password"] = self.settings.redis_password
+        
+        if self.settings.redis_username:
+            params["username"] = self.settings.redis_username
+        
+        # Add SSL configuration if enabled
+        if self.settings.redis_ssl:
+            params["ssl"] = True
+            params["ssl_cert_reqs"] = self.settings.redis_ssl_cert_reqs
+            
+            if self.settings.redis_ssl_ca_certs:
+                params["ssl_ca_certs"] = self.settings.redis_ssl_ca_certs
+            if self.settings.redis_ssl_certfile:
+                params["ssl_certfile"] = self.settings.redis_ssl_certfile
+            if self.settings.redis_ssl_keyfile:
+                params["ssl_keyfile"] = self.settings.redis_ssl_keyfile
+        
+        return params
+    
+    def _get_connection_info(self) -> str:
+        """Get human-readable connection info for logging."""
+        if self.settings.redis_url:
+            # Parse URL for display (hide password)
+            url_parts = self.settings.redis_url.split('@')
+            if len(url_parts) > 1:
+                return f"URL ending with @{url_parts[-1]}"
+            return "Redis URL"
+        
+        ssl_info = " (SSL)" if self.settings.redis_ssl else ""
+        return f"{self.settings.redis_host}:{self.settings.redis_port}/{self.settings.redis_db}{ssl_info}"
     
     async def _ensure_connection(self) -> bool:
         """Ensure Redis connection is active."""

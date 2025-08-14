@@ -94,16 +94,28 @@ def create_questions_response_schema() -> Dict[str, Any]:
 class GeminiProvider(AIProvider):
     """Google Gemini AI provider implementation."""
     
-    def __init__(self, api_key: str, model_name: str = "gemini-1.5-pro"):
+    def __init__(self, api_key: str, primary_model: str = "gemini-1.5-pro", 
+                 fallback_model: str = "gemini-1.5-flash", 
+                 last_resort_model: str = "gemini-2.0-flash-exp"):
         """
-        Initialize Gemini provider.
+        Initialize Gemini provider with model fallback chain.
         
         Args:
             api_key: Google Gemini API key
-            model_name: Model name (gemini-1.5-pro, gemini-1.5-flash, gemini-2.0-flash-exp, etc.)
+            primary_model: Primary model for generation
+            fallback_model: Fallback model when primary fails
+            last_resort_model: Last resort when both fail
         """
         genai.configure(api_key=api_key)
-        self.model_name = model_name
+        self.primary_model = primary_model
+        self.fallback_model = fallback_model
+        self.last_resort_model = last_resort_model
+        
+        # For backward compatibility
+        self.model_name = primary_model
+        
+        # Model fallback chain
+        self.model_chain = [primary_model, fallback_model, last_resort_model]
         
         # ESTRATÉGIA HÍBRIDA DE SAFETY SETTINGS
         # Tentar múltiplas abordagens para contornar safety blocks do Gemini 2.5 Flash
@@ -132,12 +144,12 @@ class GeminiProvider(AIProvider):
                 # Categoria não disponível em versões antigas
                 pass
         
-        # Safety settings baseado no modelo
-        self.safety_settings = self._get_model_specific_safety_settings(model_name)
+        # Safety settings baseado no modelo primário
+        self.safety_settings = self._get_model_specific_safety_settings(self.primary_model)
         
-        logger.info(f"Safety settings configurados para {model_name}: {len(self.safety_settings)} categorias")
+        logger.info(f"Safety settings configurados para {self.primary_model}: {len(self.safety_settings)} categorias")
         
-        logger.info(f"Initialized Gemini provider with model: {model_name}")
+        logger.info(f"Initialized Gemini provider with model: {self.primary_model}")
     
     def _get_model_specific_safety_settings(self, model_name: str) -> Dict[HarmCategory, HarmBlockThreshold]:
         """

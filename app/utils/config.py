@@ -14,7 +14,14 @@ class Settings(BaseSettings):
 
     # AI Configuration - Google Gemini Only
     gemini_api_key: str = "AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos"
-    gemini_model: str = "gemini-1.5-pro"  # Options: gemini-1.5-pro, gemini-1.5-flash, gemini-2.0-flash-exp, gemini-2.5-flash
+    
+    # Primary and Fallback Model Configuration
+    gemini_primary_model: str = "gemini-1.5-pro"  # Main model for generation
+    gemini_fallback_model: str = "gemini-1.5-flash"  # Fallback when primary fails
+    gemini_last_resort_model: str = "gemini-2.0-flash-exp"  # Last resort option
+    
+    # Legacy model field for backward compatibility
+    gemini_model: str = "gemini-1.5-pro"  # Deprecated, use primary_model instead
 
     # Document Generation Configuration
     doc_min_lines_per_stack: int = 500
@@ -58,13 +65,33 @@ class Settings(BaseSettings):
 
     # Redis Cache Configuration
     enable_redis_cache: bool = True
+    redis_url: str = ""  # Full Redis URL (optional, overrides other Redis settings)
     redis_host: str = "localhost"  # Use "redis" in Docker
     redis_port: int = 6379
     redis_db: int = 0
     redis_password: str = ""
-    redis_ttl_questions: int = 3600  # 1 hour
-    redis_ttl_documents: int = 86400  # 24 hours
+    redis_username: str = ""  # For Redis 6.0+ ACL
+    redis_ssl: bool = False
+    redis_ssl_cert_reqs: str = "required"  # none, optional, required
+    redis_ssl_ca_certs: str = ""
+    redis_ssl_certfile: str = ""
+    redis_ssl_keyfile: str = ""
+    
+    # Redis Connection Pool Settings
     redis_max_connections: int = 10
+    redis_retry_on_timeout: bool = True
+    redis_health_check_interval: int = 30
+    redis_connection_timeout: int = 5  # seconds
+    redis_socket_timeout: int = 5  # seconds
+    
+    # Redis Cache TTL Settings
+    redis_ttl_questions: int = 3600  # 1 hour for questions
+    redis_ttl_documents: int = 86400  # 24 hours for documents
+    redis_ttl_sessions: int = 7200  # 2 hours for sessions
+    
+    # Redis Fallback Configuration
+    redis_enable_fallback: bool = True  # Use in-memory cache when Redis fails
+    redis_fallback_timeout: int = 2  # Seconds before falling back
 
     # Cloud Storage Configuration (Optional - for production)
     gcs_bucket_name: str = ""

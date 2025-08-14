@@ -20,31 +20,45 @@ class AIProviderFactory:
     @staticmethod
     def create_provider(
         api_key: Optional[str] = None,
-        model_name: Optional[str] = None
+        primary_model: Optional[str] = None,
+        fallback_model: Optional[str] = None,
+        last_resort_model: Optional[str] = None
     ) -> AIProvider:
         """
-        Create an AI provider instance (Gemini only).
+        Create an AI provider instance (Gemini only) with model fallback chain.
         
         Args:
             api_key: API key for Gemini. If None, uses env var or default
-            model_name: Model name. If None, uses default
+            primary_model: Primary model name. If None, uses env var or default
+            fallback_model: Fallback model name. If None, uses env var or default
+            last_resort_model: Last resort model name. If None, uses env var or default
             
         Returns:
-            GeminiProvider instance
+            GeminiProvider instance with fallback chain
         """
-        # Get Gemini configuration
+        # Get Gemini API key
         if api_key is None:
-            # Try to get from env, but use provided key as fallback
             api_key = os.getenv("GEMINI_API_KEY", "AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos")
             if not api_key:
-                # Use the provided key
                 api_key = "AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos"
         
-        if model_name is None:
-            model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+        # Get model configuration with fallback chain
+        if primary_model is None:
+            primary_model = os.getenv("GEMINI_PRIMARY_MODEL") or os.getenv("GEMINI_MODEL", "gemini-1.5-pro")
         
-        logger.info(f"Using Gemini provider with model: {model_name}")
-        return GeminiProvider(api_key=api_key, model_name=model_name)
+        if fallback_model is None:
+            fallback_model = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-1.5-flash")
+        
+        if last_resort_model is None:
+            last_resort_model = os.getenv("GEMINI_LAST_RESORT_MODEL", "gemini-2.0-flash-exp")
+        
+        logger.info(f"Using Gemini provider with fallback chain: {primary_model} -> {fallback_model} -> {last_resort_model}")
+        return GeminiProvider(
+            api_key=api_key, 
+            primary_model=primary_model,
+            fallback_model=fallback_model,
+            last_resort_model=last_resort_model
+        )
     
     @staticmethod
     def get_default_provider() -> AIProvider:
