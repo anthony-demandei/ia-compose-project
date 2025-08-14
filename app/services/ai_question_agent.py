@@ -14,7 +14,6 @@ from pydantic import ValidationError
 from app.models.api_models import Question, QuestionChoice
 from app.services.ai_factory import get_ai_provider
 from app.services.question_cache import get_question_cache
-from app.services.zep_context_manager import ZepContextManager
 from app.utils.pii_safe_logging import get_pii_safe_logger
 
 logger = get_pii_safe_logger(__name__)
@@ -136,11 +135,9 @@ class AIQuestionAgent:
         self.ai_provider = get_ai_provider()
         self.system_prompt = self._create_system_prompt()
         self.cache = get_question_cache()
-        self.zep_manager = ZepContextManager()
         
         logger.info("🤖 AI Question Agent initialized", extra={
-            "cache_enabled": True,
-            "zep_enabled": self.zep_manager.enabled
+            "cache_enabled": True
         })
         
     def _create_system_prompt(self) -> str:
