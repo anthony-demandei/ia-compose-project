@@ -4,7 +4,6 @@ import os
 import logging
 from dotenv import load_dotenv
 
-from app.api.intake import router as intake_router  # Sistema de intake inteligente (legacy)
 from app.api.v1.project import router as project_router
 from app.api.v1.questions import router as questions_router  
 from app.api.v1.summary import router as summary_router
@@ -95,7 +94,6 @@ app = FastAPI(
 )
 
 # Include routers
-app.include_router(intake_router)  # Sistema de intake inteligente (legacy)
 app.include_router(project_router)  # API 1: Project Analysis
 app.include_router(questions_router)  # API 2: Questions Response
 app.include_router(summary_router)  # API 3: Summary Generation
