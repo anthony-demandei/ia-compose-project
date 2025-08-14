@@ -56,11 +56,14 @@ async def respond_to_questions(
         
         # Validate session exists
         if request.session_id not in session_storage:
-            # Initialize session storage for demo
+            logger.warning(f"Session {request.session_id} not found in storage, creating minimal session")
+            # Initialize minimal session storage for demo
             session_storage[request.session_id] = {
                 "answers": [],
                 "question_count": 0,
-                "total_answered": 0
+                "total_answered": 0,
+                "project_description": "Not provided",
+                "project_classification": {}
             }
         
         # Store answers

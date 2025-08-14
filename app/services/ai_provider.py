@@ -7,6 +7,9 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AIProvider(ABC):
@@ -177,7 +180,7 @@ def convert_messages_to_gemini_format(messages: List[Dict[str, Any]]) -> Tuple[s
 
 def convert_gemini_response_to_standard_format(gemini_response) -> str:
     """
-    Convert Gemini response to standard text format.
+    Convert Gemini response to standard text format with robust error handling.
     
     Args:
         gemini_response: Response from Gemini API
@@ -186,20 +189,50 @@ def convert_gemini_response_to_standard_format(gemini_response) -> str:
         Text content from the response
     """
     try:
-        # Handle different response structures
-        if hasattr(gemini_response, 'text'):
+        # Handle direct text attribute
+        if hasattr(gemini_response, 'text') and gemini_response.text:
             return gemini_response.text
-        elif hasattr(gemini_response, 'candidates') and gemini_response.candidates:
-            # Get first candidate's content
-            candidate = gemini_response.candidates[0]
-            if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
-                # Join all text parts
-                text_parts = []
-                for part in candidate.content.parts:
-                    if hasattr(part, 'text'):
-                        text_parts.append(part.text)
+            
+        # Handle candidates structure
+        if hasattr(gemini_response, 'candidates') and gemini_response.candidates:
+            # Safely get first candidate
+            try:
+                candidate = gemini_response.candidates[0]
+                
+                # Try to get content.parts
+                if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts') and candidate.content.parts:
+                    text_parts = []
+                    for part in candidate.content.parts:
+                        if hasattr(part, 'text') and part.text:
+                            text_parts.append(part.text)
+                    
+                    if text_parts:
+                        return ' '.join(text_parts)
+                
+                # Fallback: try candidate.text directly
+                if hasattr(candidate, 'text') and candidate.text:
+                    return candidate.text
+                    
+            except (IndexError, AttributeError) as e:
+                logger.warning(f"Error accessing candidates: {e}")
+        
+        # Try to access parts directly if it's a simple structure
+        if hasattr(gemini_response, 'parts'):
+            text_parts = []
+            for part in gemini_response.parts:
+                if hasattr(part, 'text') and part.text:
+                    text_parts.append(part.text)
+            if text_parts:
                 return ' '.join(text_parts)
-        # Fallback to string conversion
-        return str(gemini_response)
+        
+        # Final fallback: string conversion
+        response_str = str(gemini_response)
+        if response_str and response_str != "None":
+            return response_str
+            
+        # If all else fails
+        return "No response content available"
+        
     except Exception as e:
+        logger.error(f"Error extracting Gemini response: {e}")
         return f"Error extracting response: {str(e)}"

@@ -128,7 +128,7 @@ async def health_check():
 async def startup_event():
     logger.info("IA Compose API iniciado")
     logger.info(f"Ambiente: {settings.environment}")
-    logger.info(f"Modelo OpenAI: {settings.openai_model}")
+    logger.info(f"Modelo Gemini: {settings.gemini_model}")
 
     # Criar diretórios de armazenamento local se necessário
     if settings.use_local_storage:

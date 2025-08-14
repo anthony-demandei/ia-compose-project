@@ -51,6 +51,7 @@ class Question(BaseModel):
     
     code: str = Field(..., description="Unique question code (e.g., Q001)")
     text: str = Field(..., description="Question text to display")
+    why_it_matters: str = Field(..., description="Explanation of why this question is critical for project success")
     choices: List[QuestionChoice] = Field(..., description="Available answer choices")
     required: bool = Field(True, description="Whether this question is required")
     allow_multiple: bool = Field(False, description="Whether multiple choices are allowed")

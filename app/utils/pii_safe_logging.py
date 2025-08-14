@@ -183,30 +183,49 @@ class PIISafeLogger:
             # Se der erro na formatação, retornar mensagem básica
             return f"[LOG FORMATTING ERROR] {self._mask_pii_patterns(str(message))}"
 
+    def _handle_extra_context(self, kwargs):
+        """Handle extra context for structured logging."""
+        extra = kwargs.pop('extra', {})
+        if extra:
+            # Mask sensitive data in extra context
+            safe_extra = self._mask_sensitive_dict(extra)
+            # Add timestamp and component info
+            safe_extra.update({
+                'timestamp': datetime.utcnow().isoformat(),
+                'component': self.logger.name
+            })
+            kwargs['extra'] = safe_extra
+        return kwargs
+
     def info(self, message: str, *args, **kwargs):
-        """Log de informação com PII mascarado."""
-        safe_message = self._safe_format_message(message, *args, **kwargs)
-        self.logger.info(safe_message)
+        """Log de informação com PII mascarado e contexto estruturado."""
+        safe_message = self._safe_format_message(message, *args)
+        kwargs = self._handle_extra_context(kwargs)
+        self.logger.info(safe_message, **kwargs)
 
     def debug(self, message: str, *args, **kwargs):
-        """Log de debug com PII mascarado."""
-        safe_message = self._safe_format_message(message, *args, **kwargs)
-        self.logger.debug(safe_message)
+        """Log de debug com PII mascarado e contexto estruturado."""
+        safe_message = self._safe_format_message(message, *args)
+        kwargs = self._handle_extra_context(kwargs)
+        self.logger.debug(safe_message, **kwargs)
 
     def warning(self, message: str, *args, **kwargs):
-        """Log de warning com PII mascarado."""
-        safe_message = self._safe_format_message(message, *args, **kwargs)
-        self.logger.warning(safe_message)
+        """Log de warning com PII mascarado e contexto estruturado."""
+        safe_message = self._safe_format_message(message, *args)
+        kwargs = self._handle_extra_context(kwargs)
+        self.logger.warning(safe_message, **kwargs)
 
     def error(self, message: str, *args, **kwargs):
-        """Log de erro com PII mascarado."""
-        safe_message = self._safe_format_message(message, *args, **kwargs)
-        self.logger.error(safe_message)
+        """Log de erro com PII mascarado e contexto estruturado."""
+        safe_message = self._safe_format_message(message, *args)
+        kwargs = self._handle_extra_context(kwargs)
+        self.logger.error(safe_message, **kwargs)
 
     def critical(self, message: str, *args, **kwargs):
-        """Log crítico com PII mascarado."""
-        safe_message = self._safe_format_message(message, *args, **kwargs)
-        self.logger.critical(safe_message)
+        """Log crítico com PII mascarado e contexto estruturado."""
+        safe_message = self._safe_format_message(message, *args)
+        kwargs = self._handle_extra_context(kwargs)
+        self.logger.critical(safe_message, **kwargs)
 
 
 # Funções de conveniência para criar loggers seguros

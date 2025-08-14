@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from typing import List
 import uuid
 import logging
+from datetime import datetime
 
 from app.models.api_models import (
     ProjectAnalysisRequest,
@@ -16,6 +17,8 @@ from app.models.api_models import (
     ErrorResponse
 )
 from app.middleware.auth import verify_demandei_api_key
+from app.services.question_engine import QuestionEngine
+from app.services.ai_factory import get_ai_provider
 from app.utils.pii_safe_logging import get_pii_safe_logger
 
 logger = get_pii_safe_logger(__name__)
@@ -120,73 +123,95 @@ async def analyze_project(
         # Generate unique session ID
         session_id = str(uuid.uuid4())
         
-        # TODO: Replace with actual AI analysis service
-        # For now, return sample questions to demonstrate the structure
-        sample_questions = [
-            Question(
-                code="Q001",
-                text="Qual o tipo principal do seu projeto?",
-                choices=[
-                    QuestionChoice(id="web_app", text="Aplicação Web"),
-                    QuestionChoice(id="mobile_app", text="Aplicativo Mobile"),
-                    QuestionChoice(id="desktop_app", text="Software Desktop"),
-                    QuestionChoice(id="api_service", text="API/Microserviço"),
-                    QuestionChoice(id="ecommerce", text="E-commerce"),
-                    QuestionChoice(id="other", text="Outro tipo")
-                ],
-                required=True,
-                allow_multiple=False,
-                category="business"
-            ),
-            Question(
-                code="Q002", 
-                text="Qual o tamanho estimado da equipe de desenvolvimento?",
-                choices=[
-                    QuestionChoice(id="solo", text="1 desenvolvedor"),
-                    QuestionChoice(id="small", text="2-5 desenvolvedores"),
-                    QuestionChoice(id="medium", text="6-15 desenvolvedores"),
-                    QuestionChoice(id="large", text="16+ desenvolvedores")
-                ],
-                required=True,
-                allow_multiple=False,
-                category="technical"
-            ),
-            Question(
-                code="Q003",
-                text="Quais tecnologias você tem preferência ou restrições?",
-                choices=[
-                    QuestionChoice(id="react", text="React/Next.js"),
-                    QuestionChoice(id="vue", text="Vue.js/Nuxt.js"),
-                    QuestionChoice(id="angular", text="Angular"),
-                    QuestionChoice(id="python", text="Python (Django/FastAPI)"),
-                    QuestionChoice(id="nodejs", text="Node.js"),
-                    QuestionChoice(id="dotnet", text=".NET"),
-                    QuestionChoice(id="java", text="Java/Spring"),
-                    QuestionChoice(id="no_preference", text="Sem preferência")
-                ],
-                required=False,
-                allow_multiple=True,
-                category="technical"
-            )
-        ]
+        # Initialize question engine
+        question_engine = QuestionEngine()
         
-        # TODO: Replace with actual AI classification
-        project_classification = {
-            "type": "web_application",
-            "complexity": "moderate",
-            "domain": "generic",
-            "confidence": 0.85,
-            "key_technologies": ["web", "database", "api"],
-            "estimated_duration": "3-6 months"
+        # Generate questions dynamically using AI with enhanced context
+        session_context = {
+            "session_id": session_id,
+            "timestamp": datetime.now().isoformat(),
+            "request_metadata": request.metadata if hasattr(request, 'metadata') else {}
         }
         
+        questions = await question_engine.generate_questions_for_project(
+            project_description=request.project_description,
+            max_questions=5  # Start with 5 questions
+        )
+        
+        # If no questions generated, return error
+        if not questions:
+            logger.error("AI failed to generate questions")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to generate questions for the project"
+            )
+        
+        # Use AI to classify the project
+        ai_provider = get_ai_provider()
+        classification_prompt = f"""
+        Analyze this project and return a JSON with:
+        - type: main project type (web_app, mobile_app, api, system, automation, other)
+        - complexity: simple, moderate, complex, or enterprise
+        - confidence: 0.0 to 1.0
+        - key_aspects: list of 3-5 key technical aspects
+        - estimated_effort: rough estimate (e.g., "2-3 months", "6-12 months")
+        
+        Project: {request.project_description}
+        
+        Return ONLY valid JSON.
+        """
+        
+        try:
+            classification_response = await ai_provider.generate_json_response(
+                messages=[
+                    {"role": "system", "content": "You are a project analyst. Return only JSON."},
+                    {"role": "user", "content": classification_prompt}
+                ],
+                temperature=0.3,
+                max_tokens=500
+            )
+            
+            # Ensure proper structure
+            project_classification = {
+                "type": classification_response.get("type", "system"),
+                "complexity": classification_response.get("complexity", "moderate"),
+                "domain": "dynamic",  # No fixed domains anymore
+                "confidence": classification_response.get("confidence", 0.8),
+                "key_technologies": classification_response.get("key_aspects", []),
+                "estimated_duration": classification_response.get("estimated_effort", "3-6 months")
+            }
+        except Exception as e:
+            logger.warning(f"Classification failed, using defaults: {e}")
+            project_classification = {
+                "type": "system",
+                "complexity": "moderate",
+                "domain": "dynamic",
+                "confidence": 0.7,
+                "key_technologies": [],
+                "estimated_duration": "To be determined"
+            }
+        
+        # Build response
         response = ProjectAnalysisResponse(
             session_id=session_id,
-            questions=sample_questions,
-            total_questions=len(sample_questions),
-            estimated_completion_time=5,
+            questions=questions,
+            total_questions=len(questions),
+            estimated_completion_time=len(questions) * 2,  # ~2 min per question
             project_classification=project_classification
         )
+        
+        # Store session context for future use
+        from app.api.v1.questions import session_storage
+        session_storage[session_id] = {
+            "project_description": request.project_description,
+            "project_classification": project_classification,
+            "questions": questions,
+            "answers": [],
+            "question_count": len(questions),
+            "total_answered": 0,
+            "timestamp": datetime.now().isoformat(),
+            "status": "active"
+        }
         
         logger.info(f"Project analysis completed for session {session_id}")
         return response
