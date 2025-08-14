@@ -1,37 +1,118 @@
 version: '3.8'
 
 services:
-  intelligent-intake:
-    build: .
+  ia-compose-api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: ia-compose-api
+    restart: unless-stopped
     ports:
-      - "${PORT:-8000}:8000"
+      - "${PORT:-8001}:${PORT:-8001}"
     environment:
-      # Core Configuration
-      - ENVIRONMENT=${ENVIRONMENT:-development}
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos}
-      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
-      
-      # API Authentication
-      - DEMANDEI_API_KEY=${DEMANDEI_API_KEY}
-      
-      # Storage Configuration
-      - USE_LOCAL_STORAGE=${USE_LOCAL_STORAGE:-true}
-      - LOCAL_STORAGE_PATH=/app/storage
-      - LOCAL_DOCUMENTS_PATH=/app/storage/documents
-      - LOCAL_SESSIONS_PATH=/app/storage/sessions
-      
-      # Intake Configuration
-      - MAX_QUESTIONS_PER_SELECTION=${MAX_QUESTIONS_PER_SELECTION:-15}
-      - ENABLE_CONTEXT_INFERENCE=${ENABLE_CONTEXT_INFERENCE:-true}
-      - ENABLE_SMART_FILTERING=${ENABLE_SMART_FILTERING:-true}
-      
-      # Multi-Agent Configuration
-      - ENABLE_MULTI_AGENT=${ENABLE_MULTI_AGENT:-false}
-      - CONSENSUS_THRESHOLD=${CONSENSUS_THRESHOLD:-0.7}
-      
-      # Logging
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      # =============================================================================
+      # CORE APPLICATION SETTINGS
+      # =============================================================================
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DEBUG: ${DEBUG:-false}
+      HOST: ${HOST:-0.0.0.0}
+      PORT: ${PORT:-8001}
+
+      # =============================================================================
+      # AUTHENTICATION & SECURITY
+      # =============================================================================
+      DEMANDEI_API_KEY: ${DEMANDEI_API_KEY}
+
+      # =============================================================================
+      # AI CONFIGURATION - GOOGLE GEMINI
+      # =============================================================================
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash-exp}
+
+      # =============================================================================
+      # DOCUMENT GENERATION SETTINGS
+      # =============================================================================
+      DOC_MIN_LINES_PER_STACK: ${DOC_MIN_LINES_PER_STACK:-500}
+      DOC_MAX_GENERATION_ATTEMPTS: ${DOC_MAX_GENERATION_ATTEMPTS:-3}
+      DOC_GENERATION_TEMPERATURE: ${DOC_GENERATION_TEMPERATURE:-0.8}
+      DOC_GENERATION_MAX_TOKENS: ${DOC_GENERATION_MAX_TOKENS:-8000}
+
+      # =============================================================================
+      # QUESTION ENGINE SETTINGS
+      # =============================================================================
+      QUESTION_MAX_PER_SELECTION: ${QUESTION_MAX_PER_SELECTION:-15}
+      QUESTION_SIMILARITY_THRESHOLD: ${QUESTION_SIMILARITY_THRESHOLD:-0.7}
+      QUESTION_CACHE_TTL_SECONDS: ${QUESTION_CACHE_TTL_SECONDS:-3600}
+      QUESTION_GENERATION_TEMPERATURE: ${QUESTION_GENERATION_TEMPERATURE:-0.5}
+      QUESTION_GENERATION_MAX_TOKENS: ${QUESTION_GENERATION_MAX_TOKENS:-2048}
+
+      # =============================================================================
+      # STORAGE CONFIGURATION
+      # =============================================================================
+      USE_LOCAL_STORAGE: ${USE_LOCAL_STORAGE:-true}
+      LOCAL_STORAGE_PATH: ${LOCAL_STORAGE_PATH:-/app/storage}
+      LOCAL_DOCUMENTS_PATH: ${LOCAL_DOCUMENTS_PATH:-/app/storage/documents}
+      LOCAL_SESSIONS_PATH: ${LOCAL_SESSIONS_PATH:-/app/storage/sessions}
+
+      # Cloud Storage (Optional for production)
+      GCS_BUCKET_NAME: ${GCS_BUCKET_NAME:-}
+      GCS_CREDENTIALS_PATH: ${GCS_CREDENTIALS_PATH:-}
+      FIRESTORE_PROJECT_ID: ${FIRESTORE_PROJECT_ID:-}
+
+      # =============================================================================
+      # SESSION MANAGEMENT
+      # =============================================================================
+      MAX_SESSION_DURATION: ${MAX_SESSION_DURATION:-3600}
+      SESSION_CLEANUP_INTERVAL: ${SESSION_CLEANUP_INTERVAL:-300}
+
+      # =============================================================================
+      # API CONFIGURATION
+      # =============================================================================
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000","http://localhost:8080","http://localhost:8000"]}
+      MAX_REQUEST_SIZE: ${MAX_REQUEST_SIZE:-10485760}
+      REQUEST_TIMEOUT: ${REQUEST_TIMEOUT:-120}
+
+      # =============================================================================
+      # LOGGING CONFIGURATION
+      # =============================================================================
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ENABLE_PII_SAFE_LOGGING: ${ENABLE_PII_SAFE_LOGGING:-true}
+      LOG_FILE_PATH: ${LOG_FILE_PATH:-/app/logs/app.log}
+      LOG_ROTATION_SIZE: ${LOG_ROTATION_SIZE:-10MB}
+      LOG_RETENTION_DAYS: ${LOG_RETENTION_DAYS:-30}
+
+      # =============================================================================
+      # PERFORMANCE SETTINGS
+      # =============================================================================
+      ENABLE_RESPONSE_COMPRESSION: ${ENABLE_RESPONSE_COMPRESSION:-true}
+      ENABLE_REQUEST_VALIDATION: ${ENABLE_REQUEST_VALIDATION:-true}
+      MAX_CONCURRENT_REQUESTS: ${MAX_CONCURRENT_REQUESTS:-100}
+
     volumes:
-      - .:/app
+      # Persistent storage for documents and sessions
       - ./storage:/app/storage
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+      # Persistent storage for logs
+      - ./logs:/app/logs
+      # Development mode: mount source code for hot reload
+      - "${COMPOSE_DEVELOPMENT_MOUNT:-/dev/null}:/app"
+    
+    networks:
+      - ia-compose-network
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-8001}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+
+networks:
+  ia-compose-network:
+    driver: bridge
+
+volumes:
+  ia-compose-storage:
+    driver: local
+  ia-compose-logs:
+    driver: local

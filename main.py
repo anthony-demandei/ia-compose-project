@@ -9,6 +9,13 @@ from app.api.v1.questions import router as questions_router
 from app.api.v1.summary import router as summary_router
 from app.api.v1.documents import router as documents_router
 from app.utils.config import get_settings
+from app.models.api_models import (
+    ProjectAnalysisRequest, ProjectAnalysisResponse,
+    QuestionResponseRequest, QuestionResponseResponse,
+    SummaryRequest, SummaryResponse,
+    DocumentGenerationRequest, DocumentGenerationResponse,
+    ErrorResponse
+)
 
 # Load environment variables
 load_dotenv()
@@ -56,6 +63,11 @@ app = FastAPI(
     Verificações de saúde disponíveis para monitoramento:
     - `/health` - Status geral da API
     - `/v1/{service}/health` - Status de cada serviço individual
+    
+    ## 🧪 Testing Interface
+    
+    Use the `/test` endpoint para obter exemplos completos de como testar todas as APIs.
+    Contém exemplos prontos para copy/paste no Swagger UI.
     """,
     version="3.0.0",
     docs_url="/docs",
@@ -64,6 +76,10 @@ app = FastAPI(
         {
             "name": "Health",
             "description": "Health checks e status da API"
+        },
+        {
+            "name": "Testing",
+            "description": "🧪 **Interface de Testes**: Exemplos e dados para testar todas as APIs no Swagger UI"
         },
         {
             "name": "project", 
@@ -138,6 +154,134 @@ async def startup_event():
 
         logger.info(f"Armazenamento local configurado: {settings.local_storage_path}")
 
+
+@app.get("/test", tags=["Testing"], summary="API Test Interface")
+async def test_interface():
+    """
+    **Interactive API Test Interface**
+    
+    This endpoint provides examples and test data for all 4 APIs in the workflow.
+    Use these examples to test the complete workflow in Swagger UI.
+    
+    **Workflow Steps:**
+    1. Copy example from API 1 → Test `/v1/project/analyze`
+    2. Copy session_id from response → Use in API 2
+    3. Test `/v1/questions/respond` → Continue until ready_for_summary
+    4. Test `/v1/summary/generate` → Review and confirm
+    5. Test `/v1/documents/generate` → Get final documentation
+    
+    **Authentication Required:**
+    Add `Authorization: Bearer your_demandei_api_key` to all requests.
+    """
+    return {
+        "message": "IA Compose API Test Interface",
+        "version": "3.2.0",
+        "authentication": {
+            "header": "Authorization: Bearer your_demandei_api_key",
+            "note": "Replace 'your_demandei_api_key' with actual API key"
+        },
+        "workflow_examples": {
+            "api_1_project_analysis": {
+                "endpoint": "/v1/project/analyze",
+                "method": "POST",
+                "example_request": {
+                    "project_description": "Sistema de gestão para clínica veterinária com 3 veterinários e 150 pets cadastrados. Funcionalidades: agendamento de consultas, prontuários eletrônicos, controle de vacinas, estoque de medicamentos, faturamento. Orçamento: R$ 60.000. Prazo: 4 meses. Tecnologia preferida: React + Python.",
+                    "metadata": {
+                        "source": "swagger_ui_test",
+                        "user_id": "test_user_123"
+                    }
+                },
+                "expected_response": {
+                    "session_id": "sess_abc123def456",
+                    "questions": ["Array of generated questions"],
+                    "total_questions": 6,
+                    "estimated_completion_time": 8,
+                    "project_classification": {
+                        "type": "web_application",
+                        "complexity": "moderate",
+                        "domain": "healthcare"
+                    }
+                }
+            },
+            "api_2_questions_response": {
+                "endpoint": "/v1/questions/respond",
+                "method": "POST",
+                "example_request": {
+                    "session_id": "sess_abc123def456",
+                    "answers": [
+                        {
+                            "question_code": "Q001",
+                            "selected_choices": ["web_app"]
+                        },
+                        {
+                            "question_code": "Q002",
+                            "selected_choices": ["small"]
+                        },
+                        {
+                            "question_code": "Q003",
+                            "selected_choices": ["react", "python"]
+                        }
+                    ],
+                    "request_next_batch": True
+                },
+                "note": "Repeat until response_type becomes 'ready_for_summary'"
+            },
+            "api_3_summary_generation": {
+                "endpoint": "/v1/summary/generate",
+                "method": "POST",
+                "example_request": {
+                    "session_id": "sess_abc123def456",
+                    "include_assumptions": True
+                },
+                "confirmation_endpoint": "/v1/summary/confirm",
+                "confirmation_request": {
+                    "session_id": "sess_abc123def456",
+                    "confirmed": True,
+                    "additional_notes": "Summary approved"
+                }
+            },
+            "api_4_documents_generation": {
+                "endpoint": "/v1/documents/generate",
+                "method": "POST",
+                "example_request": {
+                    "session_id": "sess_abc123def456",
+                    "format_type": "markdown",
+                    "include_implementation_details": True
+                },
+                "expected_response": {
+                    "stacks": [
+                        {
+                            "stack_type": "frontend",
+                            "title": "Frontend Development Stack",
+                            "content": "Detailed implementation guide...",
+                            "technologies": ["React", "Next.js", "TypeScript"],
+                            "estimated_effort": "6-8 weeks"
+                        }
+                    ]
+                }
+            }
+        },
+        "quick_test_examples": {
+            "simple_project": {
+                "description": "Sistema simples de gestão para loja de roupas com vendas e estoque",
+                "use_case": "Quick test with minimal complexity"
+            },
+            "medium_project": {
+                "description": "Plataforma de e-commerce B2C para venda de produtos de beleza com catálogo, carrinho, pagamentos e avaliações. Orçamento: R$ 150.000, Prazo: 6 meses",
+                "use_case": "Medium complexity test"
+            },
+            "complex_project": {
+                "description": "Sistema completo de gestão hospitalar para 500 leitos incluindo prontuários eletrônicos integrados com HL7 FHIR, módulo de farmácia com controle de estoque automatizado, sistema de agendamento inteligente e dashboard médico com IA para diagnóstico assistido. Orçamento: R$ 2.000.000, Prazo: 18 meses",
+                "use_case": "Complex enterprise system test"
+            }
+        },
+        "tips": {
+            "swagger_ui": "Use the 'Try it out' button in Swagger UI to test endpoints",
+            "session_management": "Session IDs are returned from API 1 and used in subsequent APIs",
+            "authentication": "All endpoints except /health require Bearer token authentication",
+            "response_format": "All responses are in JSON format with structured error handling"
+        }
+    }
 
 @app.on_event("shutdown")
 async def shutdown_event():
