@@ -1,0 +1,94 @@
+# Git and version control
+.git
+.gitignore
+.github
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.coverage.*
+.pytest_cache
+htmlcov
+
+# Development and testing
+.env
+.env.*
+*.log
+.DS_Store
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Documentation and README files
+README.md
+CHANGELOG.md
+LICENSE
+*.md
+
+# Storage and logs (will be mounted as volumes)
+storage/
+logs/
+temp/
+tmp/
+
+# Test files and scripts
+tests/
+test_*.py
+*_test.py
+test/
+
+# Development scripts
+scripts/
+tools/
+dev/
+
+# Docker files (no need to copy into image)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+Jenkinsfile
+
+# Local development artifacts
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.tox/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+*.code-workspace
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Local configuration that shouldn't be in container
+local_config.py
+config_local.py

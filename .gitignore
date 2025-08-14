@@ -1,4 +1,10 @@
-# Python
+# =============================================================================
+# IA COMPOSE PROJECT - GITIGNORE
+# =============================================================================
+
+# =============================================================================
+# PYTHON
+# =============================================================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -23,42 +29,302 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# Virtual environments
+# =============================================================================
+# VIRTUAL ENVIRONMENTS
+# =============================================================================
 venv/
 env/
 ENV/
+.venv/
+.env/
+virtualenv/
 
-# Environment variables
+# =============================================================================
+# ENVIRONMENT VARIABLES & SECRETS
+# =============================================================================
 .env
+.env.*
+!.env.example
 .env.local
+.env.development
+.env.staging
 .env.production
+.env.test
 
-# Google Cloud credentials
+# API Keys and secrets
+*api_key*
+*secret*
+*credentials*
+*token*
+
+# =============================================================================
+# GOOGLE CLOUD & AI CREDENTIALS
+# =============================================================================
 gcp-credentials.json
-*.json
+google-credentials.json
+service-account*.json
+gemini-key.json
 
-# IDE
+# Keep only example credentials
+!*example*.json
+!*template*.json
+
+# =============================================================================
+# STORAGE & RUNTIME DATA
+# =============================================================================
+# Local storage directories
+storage/
+logs/
+temp/
+tmp/
+cache/
+uploads/
+
+# Session data
+sessions/
+*.session
+*.cache
+
+# Generated documents
+documents/
+generated/
+output/
+
+# =============================================================================
+# DEVELOPMENT TOOLS & IDE
+# =============================================================================
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+.sublime-*
+*.code-workspace
 
-# Logs
-*.log
+# JetBrains
+.idea/
+*.iml
+*.ipr
+*.iws
 
-# OS
-.DS_Store
-Thumbs.db
+# Vim
+*.swp
+*.swo
+*~
 
-# Testing
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# =============================================================================
+# TESTING & COVERAGE
+# =============================================================================
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+.cache/
+nosetests.xml
+test-results/
+junit.xml
 
-# Docker
-.dockerignore
+# Test outputs
+test_*.py.out
+*_test_output/
 
-# Node.js / pnpm
+# =============================================================================
+# DOCKER & CONTAINERIZATION
+# =============================================================================
+# Docker volumes and data
+docker-data/
+docker-logs/
+.docker/
+
+# Docker Compose overrides
+docker-compose.override.yml
+docker-compose.local.yml
+docker-compose.*.yml
+!docker-compose.yml
+
+# =============================================================================
+# PACKAGE MANAGERS & DEPENDENCIES
+# =============================================================================
+# pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# conda
+.conda/
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# Node.js / npm / pnpm (if frontend components exist)
 node_modules/
 .pnpm-store/
-apps/web/.pnpm-store/
+package-lock.json
+yarn.lock
+
+# =============================================================================
+# OPERATING SYSTEM
+# =============================================================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Icon?
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# =============================================================================
+# LOGS & MONITORING
+# =============================================================================
+*.log
+*.log.*
+logs/
+log/
+*.out
+*.err
+
+# Application logs
+app.log*
+error.log*
+access.log*
+debug.log*
+
+# Monitoring and metrics
+metrics/
+monitoring/
+prometheus/
+
+# =============================================================================
+# BACKUP & TEMPORARY FILES
+# =============================================================================
+*.bak
+*.backup
+*.old
+*.orig
+*.save
+*.tmp
+*.temp
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# =============================================================================
+# DATABASE & DATA FILES
+# =============================================================================
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# Data exports
+*.csv
+*.xlsx
+*.json
+!*example*.json
+!*template*.json
+!*schema*.json
+
+# =============================================================================
+# SECURITY & COMPLIANCE
+# =============================================================================
+# Security scans
+security-report.json
+vulnerability-report.json
+
+# Compliance reports
+compliance/
+audit/
+
+# =============================================================================
+# CI/CD & DEPLOYMENT
+# =============================================================================
+# GitHub Actions artifacts
+.github/workflows/secrets/
+
+# Deployment configs
+deploy/
+deployment/
+k8s/secrets/
+helm/secrets/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# =============================================================================
+# JUPYTER NOTEBOOKS (if used for data analysis)
+# =============================================================================
+.ipynb_checkpoints/
+*.ipynb
+
+# =============================================================================
+# DOCUMENTATION BUILDS
+# =============================================================================
+docs/_build/
+docs/build/
+site/
+
+# =============================================================================
+# PERFORMANCE & PROFILING
+# =============================================================================
+*.prof
+*.profile
+.profiling/
+
+# =============================================================================
+# PROJECT-SPECIFIC IGNORES
+# =============================================================================
+# Generated markdown reports
+relatorio_*.md
+resumo_*.md
+
+# Test outputs and artifacts
+test_*.py
+tests/test_95_percent_success.py
+tests/test_detailed_questions.py
+tests/test_dynamic_questions.py
+tests/test_gemini_*.py
+tests/test_improvements.py
+tests/test_questions_analysis.py
+tests/test_robust_json_parsing.py
+tests/test_structured_output.py
+
+# ZEP and Redis artifacts (legacy)
+zep_data/
+redis_data/
+
+# Switch GitHub script (if sensitive)
+switch-github.sh

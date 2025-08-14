@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   ia-compose-api:
@@ -93,8 +92,6 @@ services:
       - ./storage:/app/storage
       # Persistent storage for logs
       - ./logs:/app/logs
-      # Development mode: mount source code for hot reload
-      - "${COMPOSE_DEVELOPMENT_MOUNT:-/dev/null}:/app"
     
     networks:
       - ia-compose-network

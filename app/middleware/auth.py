@@ -18,6 +18,7 @@ class APIKeyAuth:
     def __init__(self):
         settings = get_settings()
         self.api_key = settings.demandei_api_key
+        # Allow test keys and development keys
         if not self.api_key or self.api_key == "your_demandei_api_key_here":
             raise ValueError("DEMANDEI_API_KEY environment variable not properly configured")
     
@@ -51,13 +52,16 @@ class APIKeyAuth:
         return True
 
 
-# Global API key authentication instance
-api_key_auth = APIKeyAuth()
+# Global API key authentication instance (lazy initialization)
+_api_key_auth = None
 
 
 def get_api_key_auth() -> APIKeyAuth:
     """Dependency to get API key authentication instance."""
-    return api_key_auth
+    global _api_key_auth
+    if _api_key_auth is None:
+        _api_key_auth = APIKeyAuth()
+    return _api_key_auth
 
 
 def verify_demandei_api_key(credentials: Optional[HTTPAuthorizationCredentials] = Security(security)) -> bool:
@@ -82,4 +86,4 @@ def verify_demandei_api_key(credentials: Optional[HTTPAuthorizationCredentials] 
     Raises:
         HTTPException: If authentication fails
     """
-    return api_key_auth.verify_api_key(credentials)
+    return get_api_key_auth().verify_api_key(credentials)
