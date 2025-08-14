@@ -27,6 +27,7 @@ router = APIRouter(
 # External session storage reference
 from app.api.v1.questions import session_storage
 from app.services.document_generator import DocumentGeneratorService
+from app.services.redis_cache import get_redis_cache
 
 
 @router.post("/generate", response_model=DocumentGenerationResponse)
@@ -53,6 +54,15 @@ async def generate_documents(
     """
     try:
         logger.info(f"Generating documents for session {request.session_id}")
+        
+        # Check Redis cache first
+        cache = get_redis_cache()
+        cached_document = await cache.get_cached_document(request.session_id)
+        
+        if cached_document:
+            logger.info(f"📦 Using cached documents for session {request.session_id}")
+            # Return cached response
+            return DocumentGenerationResponse(**cached_document)
         
         # Validate session exists and is confirmed
         if request.session_id not in session_storage:
@@ -85,10 +95,26 @@ async def generate_documents(
         project_classification = session_data.get("project_classification", {})
         answers = session_data.get("answers", [])
         
-        stacks = await doc_generator.generate_documents(
-            session_data=session_data,
-            include_implementation=request.include_implementation_details
-        )
+        # Set 3-minute timeout for document generation
+        import asyncio
+        try:
+            stacks = await asyncio.wait_for(
+                doc_generator.generate_documents(
+                    session_data=session_data,
+                    include_implementation=request.include_implementation_details
+                ),
+                timeout=180.0  # 3 minutes
+            )
+        except asyncio.TimeoutError:
+            raise HTTPException(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                detail=ErrorResponse(
+                    error_code="GENERATION_TIMEOUT",
+                    message="Document generation timed out after 3 minutes",
+                    details={"suggestion": "Use /v1/documents/generate/async for long-running generations"},
+                    session_id=request.session_id
+                ).dict()
+            )
         
         # Calculate total effort based on generated stacks
         total_effort = doc_generator.calculate_total_effort(stacks)
@@ -101,6 +127,10 @@ async def generate_documents(
             total_estimated_effort=total_effort,
             recommended_timeline=timeline
         )
+        
+        # Cache the generated documents
+        await cache.cache_document(request.session_id, response.dict())
+        logger.info(f"💾 Cached documents for session {request.session_id} (24h TTL)")
         
         # Store generated documents in session
         session_data["generated_documents"] = response.dict()

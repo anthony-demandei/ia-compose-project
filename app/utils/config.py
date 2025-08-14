@@ -14,7 +14,7 @@ class Settings(BaseSettings):
 
     # AI Configuration - Google Gemini Only
     gemini_api_key: str = "AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos"
-    gemini_model: str = "gemini-2.0-flash-exp"  # Options: gemini-2.5-flash, gemini-2.0-flash-exp, gemini-1.5-flash, gemini-1.5-pro
+    gemini_model: str = "gemini-1.5-pro"  # Options: gemini-1.5-pro, gemini-1.5-flash, gemini-2.0-flash-exp, gemini-2.5-flash
 
     # Document Generation Configuration
     doc_min_lines_per_stack: int = 500
@@ -55,6 +55,16 @@ class Settings(BaseSettings):
     enable_response_compression: bool = True
     enable_request_validation: bool = True
     max_concurrent_requests: int = 100
+
+    # Redis Cache Configuration
+    enable_redis_cache: bool = True
+    redis_host: str = "localhost"  # Use "redis" in Docker
+    redis_port: int = 6379
+    redis_db: int = 0
+    redis_password: str = ""
+    redis_ttl_questions: int = 3600  # 1 hour
+    redis_ttl_documents: int = 86400  # 24 hours
+    redis_max_connections: int = 10
 
     # Cloud Storage Configuration (Optional - for production)
     gcs_bucket_name: str = ""

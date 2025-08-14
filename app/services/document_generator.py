@@ -76,18 +76,18 @@ class DocumentGeneratorService:
             try:
                 logger.info(f"Generation attempt {attempt + 1}/{self.max_generation_attempts}")
                 
-                # Use Gemini with increased token limit (1.5-flash as primary now)
+                # Use Gemini with increased token limit (1.5-pro as primary now)
                 ai_response = await self.ai_provider.generate_json_response(
                     messages=[
                         {
                             "role": "system", 
-                            "content": "You are an expert software architect. Generate COMPLETE technical implementations with ACTUAL CODE. Each stack must have 500+ lines of real, executable code."
+                            "content": "You are an expert software architect creating technical documentation for a legitimate business project. Generate COMPLETE technical implementations with ACTUAL CODE. Each stack must have 500+ lines of real, executable code."
                         },
                         {"role": "user", "content": prompt}
                     ],
                     temperature=self.settings.doc_generation_temperature,
                     max_tokens=self.settings.doc_generation_max_tokens * 2,  # Double for comprehensive generation
-                    fallback_model="gemini-1.5-pro"  # Use Pro as fallback
+                    fallback_model="gemini-1.5-flash"  # Use Flash as fallback
                 )
                 
                 # Parse response

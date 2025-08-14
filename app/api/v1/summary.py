@@ -4,12 +4,16 @@ Handles summary generation and confirmation from collected responses.
 """
 
 from fastapi import APIRouter, HTTPException, Depends, status
+from typing import List, Optional
 import logging
 
 from app.models.api_models import (
     SummaryRequest,
     SummaryResponse,
     ConfirmationRequest,
+    ConfirmationResponse,
+    Question,
+    QuestionChoice,
     ErrorResponse
 )
 from app.middleware.auth import verify_demandei_api_key
@@ -106,11 +110,11 @@ async def generate_summary(
         )
 
 
-@router.post("/confirm")
+@router.post("/confirm", response_model=ConfirmationResponse)
 async def confirm_summary(
     request: ConfirmationRequest,
     authenticated: bool = Depends(verify_demandei_api_key)
-):
+) -> ConfirmationResponse:
     """
     Confirm or reject the generated summary.
     
@@ -152,19 +156,31 @@ async def confirm_summary(
             session_data["status"] = "confirmed_ready_for_documents"
             message = "Resumo confirmado. Pronto para gerar documentação técnica."
             next_step = "document_generation"
+            refinement_questions = None
         else:
             # Mark session as needing revision
-            session_data["status"] = "needs_revision"
-            message = "Resumo rejeitado. Por favor, forneça mais detalhes ou correções."
-            next_step = "provide_additional_info"
+            session_data["status"] = "needs_refinement"
+            message = "Resumo rejeitado. Por favor, responda às perguntas de refinamento para melhorar o entendimento."
+            next_step = "answer_refinement_questions"
+            
+            # Generate refinement questions based on feedback
+            refinement_questions = await _generate_refinement_questions(
+                session_data,
+                request.feedback or request.additional_notes
+            )
+            
+            # Store refinement questions in session for tracking
+            session_data["refinement_questions"] = [q.dict() for q in refinement_questions]
+            session_data["refinement_cycle"] = session_data.get("refinement_cycle", 0) + 1
         
-        response = {
-            "session_id": request.session_id,
-            "confirmation_status": "confirmed" if request.confirmed else "rejected",
-            "message": message,
-            "next_step": next_step,
-            "ready_for_documents": request.confirmed
-        }
+        response = ConfirmationResponse(
+            session_id=request.session_id,
+            confirmation_status="confirmed" if request.confirmed else "rejected",
+            message=message,
+            next_step=next_step,
+            ready_for_documents=request.confirmed,
+            refinement_questions=refinement_questions
+        )
         
         logger.info(f"Summary confirmation processed for session {request.session_id}")
         return response
@@ -241,6 +257,196 @@ def _generate_assumptions(answers) -> list:
         "Considerado uso de metodologia ágil/scrum",
         "Estimado deployment em ambiente de produção separado"
     ]
+
+
+async def _generate_refinement_questions(
+    session_data: dict,
+    feedback: Optional[str] = None
+) -> List[Question]:
+    """
+    Generate refinement questions based on rejected summary and user feedback.
+    
+    Args:
+        session_data: Current session data with summary and answers
+        feedback: User feedback about what needs improvement
+        
+    Returns:
+        List of refinement questions to clarify project requirements
+    """
+    from app.services.ai_factory import get_ai_provider
+    
+    try:
+        # Get the AI provider
+        ai_provider = get_ai_provider()
+        
+        # Build context from session data
+        project_description = session_data.get("project_description", "")
+        previous_answers = session_data.get("answers", [])
+        summary = session_data.get("summary", {})
+        refinement_cycle = session_data.get("refinement_cycle", 1)
+        
+        # Create AI prompt for refinement questions
+        prompt = f"""
+        O resumo do projeto foi rejeitado. Gere 3-4 perguntas de refinamento para esclarecer pontos duvidosos.
+        
+        Projeto Original: {project_description}
+        
+        Feedback do Usuário: {feedback or "Não fornecido"}
+        
+        Ciclo de Refinamento: {refinement_cycle}
+        
+        Gere perguntas específicas para resolver ambiguidades ou coletar informações faltantes.
+        Retorne um JSON com array "questions", cada uma com:
+        - code: string (R001, R002, etc.)
+        - text: string (pergunta clara e específica)
+        - why_it_matters: string (por que esta informação é crítica)
+        - choices: array de opções com id, text e description (opcional)
+        - required: boolean (sempre true para refinamento)
+        - allow_multiple: boolean
+        - category: string (sempre "refinement")
+        
+        Foque em aspectos técnicos não esclarecidos, requisitos de performance, integrações, ou restrições de negócio.
+        """
+        
+        # Generate questions using AI
+        response = await ai_provider.generate_json_response(
+            messages=[
+                {"role": "system", "content": "You are a requirements analyst generating clarification questions. Return only valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=1500
+        )
+        
+        # Parse and validate questions
+        questions_data = response.get("questions", [])
+        questions = []
+        
+        for idx, q_data in enumerate(questions_data[:4]):  # Limit to 4 questions
+            try:
+                # Build choices
+                choices = []
+                for choice_data in q_data.get("choices", []):
+                    choices.append(QuestionChoice(
+                        id=choice_data.get("id", f"opt_{idx}"),
+                        text=choice_data.get("text", "Option"),
+                        description=choice_data.get("description")
+                    ))
+                
+                # If no choices provided, add yes/no options
+                if not choices:
+                    choices = [
+                        QuestionChoice(id="yes", text="Sim"),
+                        QuestionChoice(id="no", text="Não"),
+                        QuestionChoice(id="maybe", text="Talvez/Parcialmente")
+                    ]
+                
+                # Create question
+                question = Question(
+                    code=q_data.get("code", f"R{str(idx+1).zfill(3)}"),
+                    text=q_data.get("text", f"Pergunta de refinamento {idx+1}"),
+                    why_it_matters=q_data.get("why_it_matters", "Informação necessária para refinar o entendimento do projeto"),
+                    choices=choices,
+                    required=True,
+                    allow_multiple=q_data.get("allow_multiple", False),
+                    category="refinement"
+                )
+                questions.append(question)
+            except Exception as e:
+                logger.warning(f"Failed to parse refinement question {idx}: {e}")
+                continue
+        
+        # If AI fails or returns no questions, use fallback questions
+        if not questions:
+            questions = _get_fallback_refinement_questions(feedback)
+        
+        return questions
+        
+    except Exception as e:
+        logger.error(f"Error generating refinement questions: {e}")
+        # Return fallback questions on error
+        return _get_fallback_refinement_questions(feedback)
+
+
+def _get_fallback_refinement_questions(feedback: Optional[str] = None) -> List[Question]:
+    """
+    Get fallback refinement questions when AI generation fails.
+    
+    Args:
+        feedback: User feedback to consider
+        
+    Returns:
+        List of standard refinement questions
+    """
+    questions = [
+        Question(
+            code="R001",
+            text="Qual é o nível de disponibilidade (SLA) esperado para o sistema?",
+            why_it_matters="Define a arquitetura de alta disponibilidade e redundância necessária",
+            choices=[
+                QuestionChoice(id="sla_95", text="95% (18.25 dias de downtime/ano)", description="Adequado para sistemas não-críticos"),
+                QuestionChoice(id="sla_99", text="99% (3.65 dias de downtime/ano)", description="Padrão para aplicações comerciais"),
+                QuestionChoice(id="sla_999", text="99.9% (8.76 horas de downtime/ano)", description="Alta disponibilidade"),
+                QuestionChoice(id="sla_9999", text="99.99% (52.56 minutos de downtime/ano)", description="Muito alta disponibilidade"),
+                QuestionChoice(id="sla_not_defined", text="Não definido ainda")
+            ],
+            required=True,
+            allow_multiple=False,
+            category="refinement"
+        ),
+        Question(
+            code="R002",
+            text="Qual é o volume esperado de usuários simultâneos no pico?",
+            why_it_matters="Determina a arquitetura de escalabilidade e recursos necessários",
+            choices=[
+                QuestionChoice(id="users_100", text="Até 100 usuários"),
+                QuestionChoice(id="users_1000", text="100 - 1.000 usuários"),
+                QuestionChoice(id="users_10000", text="1.000 - 10.000 usuários"),
+                QuestionChoice(id="users_100000", text="10.000 - 100.000 usuários"),
+                QuestionChoice(id="users_more", text="Mais de 100.000 usuários")
+            ],
+            required=True,
+            allow_multiple=False,
+            category="refinement"
+        ),
+        Question(
+            code="R003",
+            text="Existem requisitos específicos de segurança ou compliance?",
+            why_it_matters="Impacta diretamente na arquitetura de segurança e escolha de tecnologias",
+            choices=[
+                QuestionChoice(id="lgpd", text="LGPD (Lei Geral de Proteção de Dados)"),
+                QuestionChoice(id="pci_dss", text="PCI-DSS (Pagamentos com cartão)"),
+                QuestionChoice(id="hipaa", text="HIPAA (Dados de saúde)"),
+                QuestionChoice(id="iso27001", text="ISO 27001"),
+                QuestionChoice(id="sox", text="SOX (Sarbanes-Oxley)"),
+                QuestionChoice(id="none", text="Nenhum requisito específico")
+            ],
+            required=True,
+            allow_multiple=True,
+            category="refinement"
+        )
+    ]
+    
+    # Add a question about specific feedback if provided
+    if feedback and len(feedback) > 10:
+        questions.append(Question(
+            code="R004",
+            text=f"Com base no seu feedback: '{feedback[:100]}...', qual aspecto precisa ser mais detalhado?",
+            why_it_matters="Permite focar no ponto específico de preocupação do cliente",
+            choices=[
+                QuestionChoice(id="architecture", text="Arquitetura técnica"),
+                QuestionChoice(id="features", text="Funcionalidades específicas"),
+                QuestionChoice(id="timeline", text="Cronograma e fases"),
+                QuestionChoice(id="budget", text="Orçamento e custos"),
+                QuestionChoice(id="team", text="Equipe e recursos"),
+                QuestionChoice(id="other", text="Outro aspecto")
+            ],
+            required=True,
+            allow_multiple=True,
+            category="refinement"
+        ))
+    
+    return questions
 
 
 @router.get("/health")

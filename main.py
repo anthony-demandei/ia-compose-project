@@ -8,6 +8,7 @@ from app.api.v1.project import router as project_router
 from app.api.v1.questions import router as questions_router  
 from app.api.v1.summary import router as summary_router
 from app.api.v1.documents import router as documents_router
+from app.api.v1.documents_async import router as documents_async_router
 from app.utils.config import get_settings
 from app.models.api_models import (
     ProjectAnalysisRequest, ProjectAnalysisResponse,
@@ -113,7 +114,8 @@ app = FastAPI(
 app.include_router(project_router)  # API 1: Project Analysis
 app.include_router(questions_router)  # API 2: Questions Response
 app.include_router(summary_router)  # API 3: Summary Generation
-app.include_router(documents_router)  # API 4: Documents Generation
+app.include_router(documents_router)  # API 4: Documents Generation (sync)
+app.include_router(documents_async_router)  # API 4: Documents Generation (async)
 
 
 @app.get("/health", tags=["Health"], summary="Health Check Geral")

@@ -151,6 +151,47 @@ class ConfirmationRequest(BaseModel):
     session_id: str = Field(..., description="Session identifier")
     confirmed: bool = Field(..., description="Whether the user confirms the summary")
     additional_notes: Optional[str] = Field(None, description="Additional notes or corrections")
+    feedback: Optional[str] = Field(None, description="Feedback about what needs improvement if rejected")
+
+
+class ConfirmationResponse(BaseModel):
+    """Response model for summary confirmation."""
+    
+    session_id: str = Field(..., description="Session identifier")
+    confirmation_status: str = Field(..., description="Status: 'confirmed' or 'rejected'")
+    message: str = Field(..., description="Status message")
+    next_step: str = Field(..., description="Next step in the workflow")
+    ready_for_documents: bool = Field(..., description="Whether ready for document generation")
+    refinement_questions: Optional[List[Question]] = Field(
+        None, 
+        description="Additional questions to refine understanding if summary was rejected"
+    )
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "session_id": "sess_abc123def456",
+                "confirmation_status": "rejected",
+                "message": "Resumo rejeitado. Por favor, responda às perguntas de refinamento.",
+                "next_step": "answer_refinement_questions",
+                "ready_for_documents": False,
+                "refinement_questions": [
+                    {
+                        "code": "R001",
+                        "text": "Qual é o nível de disponibilidade (SLA) esperado para o sistema?",
+                        "why_it_matters": "Define a arquitetura de alta disponibilidade e redundância necessária",
+                        "choices": [
+                            {"id": "sla_99", "text": "99% (3.65 dias de downtime/ano)"},
+                            {"id": "sla_999", "text": "99.9% (8.76 horas de downtime/ano)"},
+                            {"id": "sla_9999", "text": "99.99% (52.56 minutos de downtime/ano)"}
+                        ],
+                        "required": True,
+                        "allow_multiple": False,
+                        "category": "refinement"
+                    }
+                ]
+            }
+        }
 
 
 class StackDocumentation(BaseModel):

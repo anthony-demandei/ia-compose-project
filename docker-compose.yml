@@ -1,11 +1,33 @@
 
 services:
+  # Redis Cache Service
+  redis:
+    image: redis:7-alpine
+    container_name: ia-compose-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    networks:
+      - ia-compose-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
   ia-compose-api:
     build: 
       context: .
       dockerfile: Dockerfile
     container_name: ia-compose-api
     restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
     ports:
       - "${PORT:-8001}:${PORT:-8001}"
     environment:
@@ -87,6 +109,18 @@ services:
       ENABLE_REQUEST_VALIDATION: ${ENABLE_REQUEST_VALIDATION:-true}
       MAX_CONCURRENT_REQUESTS: ${MAX_CONCURRENT_REQUESTS:-100}
 
+      # =============================================================================
+      # REDIS CACHE CONFIGURATION
+      # =============================================================================
+      REDIS_HOST: redis  # Always use 'redis' hostname in Docker
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_DB: ${REDIS_DB:-0}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_TTL_QUESTIONS: ${REDIS_TTL_QUESTIONS:-3600}
+      REDIS_TTL_DOCUMENTS: ${REDIS_TTL_DOCUMENTS:-86400}
+      REDIS_MAX_CONNECTIONS: ${REDIS_MAX_CONNECTIONS:-10}
+      ENABLE_REDIS_CACHE: ${ENABLE_REDIS_CACHE:-true}
+
     volumes:
       # Persistent storage for documents and sessions
       - ./storage:/app/storage
@@ -109,6 +143,8 @@ networks:
     driver: bridge
 
 volumes:
+  redis-data:
+    driver: local
   ia-compose-storage:
     driver: local
   ia-compose-logs:

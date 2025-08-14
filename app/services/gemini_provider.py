@@ -94,13 +94,13 @@ def create_questions_response_schema() -> Dict[str, Any]:
 class GeminiProvider(AIProvider):
     """Google Gemini AI provider implementation."""
     
-    def __init__(self, api_key: str, model_name: str = "gemini-1.5-flash"):
+    def __init__(self, api_key: str, model_name: str = "gemini-1.5-pro"):
         """
         Initialize Gemini provider.
         
         Args:
             api_key: Google Gemini API key
-            model_name: Model name (gemini-2.5-flash, gemini-2.0-flash-exp, gemini-1.5-pro, etc.)
+            model_name: Model name (gemini-1.5-pro, gemini-1.5-flash, gemini-2.0-flash-exp, etc.)
         """
         genai.configure(api_key=api_key)
         self.model_name = model_name
@@ -308,8 +308,8 @@ class GeminiProvider(AIProvider):
         # Determine primary model (allow override for testing)
         primary_model = alternative_primary or self.model_name
         
-        # Estratégia Otimizada para Gemini 1.5 Flash como principal
-        if "1.5-flash" in primary_model:
+        # Estratégia Otimizada para Gemini 1.5 como principal (Pro ou Flash)
+        if "1.5" in primary_model:
             # Para 1.5 Flash: estratégia simples e eficaz
             strategies_to_try = [
                 {

@@ -27,7 +27,12 @@ class QuestionEngine:
         """Initialize the question engine with AI agent and templates."""
         self.ai_agent = AIQuestionAgent()
         self.templates = QuestionTemplates()
-        logger.info("Question Engine initialized with AI agent + standardized templates")
+        
+        # Initialize Redis cache
+        from app.services.redis_cache import get_redis_cache
+        self.cache = get_redis_cache()
+        
+        logger.info("Question Engine initialized with AI agent + standardized templates + Redis cache")
         
     async def generate_questions_for_project(
         self, 
@@ -58,6 +63,14 @@ class QuestionEngine:
         
         # Ensure minimum for 70% ratio
         total_questions = max(max_questions, 6)
+        
+        # Check Redis cache first
+        if self.cache:
+            cached_questions = await self.cache.get_cached_questions(project_description)
+            if cached_questions:
+                logger.info(f"📦 Using cached questions for project (found {len(cached_questions)} questions)")
+                # Return cached questions up to max_questions
+                return cached_questions[:max_questions]
         
         try:
             # STEP 1: Get standardized questions with quota enforcement
@@ -116,6 +129,11 @@ class QuestionEngine:
             
             if mc_ratio < 70:
                 logger.warning(f"⚠️ Multiple choice ratio below target: {mc_ratio:.1f}% < 70%")
+            
+            # Cache the generated questions
+            if self.cache and questions:
+                await self.cache.cache_questions(project_description, questions)
+                logger.info(f"💾 Cached {len(questions)} questions for future use")
             
             return questions
             
@@ -184,3 +202,82 @@ class QuestionEngine:
         except Exception as e:
             logger.error(f"Failed to generate follow-up questions: {e}")
             return []
+    
+    async def generate_refinement_questions(
+        self,
+        project_description: str,
+        summary: str,
+        feedback: str,
+        num_questions: int = 4
+    ) -> List[Question]:
+        """
+        Generate refinement questions when summary is rejected.
+        
+        Args:
+            project_description: Original project description
+            summary: The rejected summary
+            feedback: User feedback about what needs improvement
+            num_questions: Number of refinement questions to generate
+            
+        Returns:
+            List of refinement questions focused on unclear aspects
+        """
+        try:
+            logger.info(f"🔄 Generating {num_questions} refinement questions based on feedback")
+            
+            # Use AI agent to generate contextual refinement questions
+            questions = await self.ai_agent.generate_refinement_questions(
+                project_description=project_description,
+                summary=summary,
+                feedback=feedback,
+                num_questions=num_questions
+            )
+            
+            # Add refinement-specific codes
+            for i, q in enumerate(questions):
+                q.code = f"R{i+1:03d}"
+                q.category = "refinement"
+            
+            logger.info(f"✅ Generated {len(questions)} refinement questions")
+            return questions
+            
+        except Exception as e:
+            logger.error(f"Failed to generate refinement questions: {e}")
+            # Return fallback refinement questions
+            return self._get_fallback_refinement_questions(feedback)
+    
+    def _get_fallback_refinement_questions(self, feedback: Optional[str] = None) -> List[Question]:
+        """Get fallback refinement questions when AI fails."""
+        from app.models.api_models import QuestionChoice
+        
+        questions = [
+            Question(
+                code="R001",
+                text="Qual é o nível de disponibilidade (SLA) esperado?",
+                why_it_matters="Define arquitetura de alta disponibilidade",
+                choices=[
+                    QuestionChoice(id="sla_99", text="99% (3.65 dias/ano)"),
+                    QuestionChoice(id="sla_999", text="99.9% (8.76 horas/ano)"),
+                    QuestionChoice(id="sla_9999", text="99.99% (52 minutos/ano)")
+                ],
+                required=True,
+                allow_multiple=False,
+                category="refinement"
+            ),
+            Question(
+                code="R002",
+                text="Qual é o volume de usuários simultâneos esperado?",
+                why_it_matters="Define escalabilidade necessária",
+                choices=[
+                    QuestionChoice(id="users_100", text="Até 100"),
+                    QuestionChoice(id="users_1000", text="100-1000"),
+                    QuestionChoice(id="users_10000", text="1000-10000"),
+                    QuestionChoice(id="users_more", text="Mais de 10000")
+                ],
+                required=True,
+                allow_multiple=False,
+                category="refinement"
+            )
+        ]
+        
+        return questions

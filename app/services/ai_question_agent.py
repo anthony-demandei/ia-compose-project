@@ -392,3 +392,59 @@ Evite repetir tópicos já cobertos.
             num_questions,
             context
         )
+    
+    async def generate_refinement_questions(
+        self,
+        project_description: str,
+        summary: str,
+        feedback: str,
+        num_questions: int = 4
+    ) -> List[Question]:
+        """
+        Generate refinement questions when summary is rejected.
+        
+        Args:
+            project_description: Original project description
+            summary: The rejected summary
+            feedback: User feedback about what needs improvement
+            num_questions: Number of refinement questions
+            
+        Returns:
+            List of refinement Question objects
+        """
+        # Create a prompt specifically for refinement
+        refinement_prompt = f"""
+        CONTEXTO: O resumo do projeto foi rejeitado e precisamos esclarecer pontos específicos.
+        
+        Projeto Original: {project_description}
+        
+        Resumo Rejeitado: {summary}
+        
+        Feedback do Usuário: {feedback}
+        
+        Gere {num_questions} perguntas de refinamento específicas para resolver as ambiguidades ou preocupações do usuário.
+        Foque em aspectos técnicos, requisitos de performance, integrações ou restrições de negócio mencionadas no feedback.
+        
+        Retorne perguntas objetivas de múltipla escolha que ajudem a esclarecer os pontos duvidosos.
+        """
+        
+        context = {
+            "refinement": True,
+            "feedback": feedback,
+            "summary": summary
+        }
+        
+        # Generate questions with refinement context
+        questions = await self.generate_questions(
+            refinement_prompt,
+            num_questions,
+            context
+        )
+        
+        # Ensure all questions are marked as refinement
+        for q in questions:
+            q.category = "refinement"
+            if not q.code.startswith("R"):
+                q.code = f"R{q.code[1:]}" if q.code[0] == "Q" else f"R{q.code}"
+        
+        return questions
