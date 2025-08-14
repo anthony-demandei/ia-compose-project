@@ -5,32 +5,31 @@ import logging
 from dotenv import load_dotenv
 
 from app.api.v1.project import router as project_router
-from app.api.v1.questions import router as questions_router  
+from app.api.v1.questions import router as questions_router
 from app.api.v1.summary import router as summary_router
 from app.api.v1.documents import router as documents_router
 from app.api.v1.documents_async import router as documents_async_router
 from app.utils.config import get_settings
 from app.models.api_models import (
-    ProjectAnalysisRequest, ProjectAnalysisResponse,
-    QuestionResponseRequest, QuestionResponseResponse,
-    SummaryRequest, SummaryResponse,
-    DocumentGenerationRequest, DocumentGenerationResponse,
-    ErrorResponse
+    ProjectAnalysisRequest,
+    ProjectAnalysisResponse,
+    QuestionResponseRequest,
+    QuestionResponseResponse,
+    SummaryRequest,
+    SummaryResponse,
+    DocumentGenerationRequest,
+    DocumentGenerationResponse,
+    ErrorResponse,
 )
 
-# Load environment variables
 load_dotenv()
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-# Get settings
 settings = get_settings()
-
-# Create FastAPI app with comprehensive documentation
 app = FastAPI(
     title="IA Compose API",
     description="""
@@ -89,25 +88,22 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_tags=[
-        {
-            "name": "Health",
-            "description": "Health checks e status da API"
-        },
+        {"name": "Health", "description": "Health checks e status da API"},
         {
             "name": "Testing",
-            "description": "🧪 **Interface de Testes**: Exemplos e dados para testar todas as APIs no Swagger UI"
+            "description": "🧪 **Interface de Testes**: Exemplos e dados para testar todas as APIs no Swagger UI",
         },
         {
-            "name": "project", 
-            "description": "🔍 **API 1**: Análise de Projetos - Classifica projeto e gera sequência de perguntas (**com cache Redis**)"
+            "name": "project",
+            "description": "🔍 **API 1**: Análise de Projetos - Classifica projeto e gera sequência de perguntas (**com cache Redis**)",
         },
         {
             "name": "questions",
-            "description": "❓ **API 2**: Processamento de Respostas - Avalia respostas e retorna próximas perguntas"
+            "description": "❓ **API 2**: Processamento de Respostas - Avalia respostas e retorna próximas perguntas",
         },
         {
-            "name": "summary", 
-            "description": "📝 **API 3**: Geração de Resumo - Cria resumo para confirmação e validação"
+            "name": "summary",
+            "description": "📝 **API 3**: Geração de Resumo - Cria resumo para confirmação e validação",
         },
         {
             "name": "documents",
@@ -117,21 +113,17 @@ app = FastAPI(
             - 🔄 **Síncrono** (`/generate`): Timeout de 3 minutos, resposta direta
             - ⚡ **Assíncrono** (`/generate/async`): Processamento em background
             - 📊 **Status** (`/status/{id}`): Verifica progresso da geração assíncrona
-            - 💾 **Cache**: Documentos armazenados por 24 horas"""
-        }
+            - 💾 **Cache**: Documentos armazenados por 24 horas""",
+        },
     ],
     contact={
         "name": "Demandei Support",
         "url": "https://demandei.com",
-        "email": "support@demandei.com"
+        "email": "support@demandei.com",
     },
-    license_info={
-        "name": "Proprietary License",
-        "url": "https://demandei.com/license"
-    }
+    license_info={"name": "Proprietary License", "url": "https://demandei.com/license"},
 )
 
-# Include routers
 app.include_router(project_router)  # API 1: Project Analysis
 app.include_router(questions_router)  # API 2: Questions Response
 app.include_router(summary_router)  # API 3: Summary Generation
@@ -143,11 +135,11 @@ app.include_router(documents_async_router)  # API 4: Documents Generation (async
 async def health_check():
     """
     **Health Check principal da API**
-    
+
     Retorna o status geral do sistema e informações de ambiente.
-    
+
     **Não requer autenticação** - Endpoint público para monitoramento.
-    
+
     Returns:
         - status: "healthy" se a API está funcionando
         - service: Nome do serviço
@@ -157,7 +149,7 @@ async def health_check():
         "status": "healthy",
         "service": "ia-compose-api",
         "environment": settings.environment,
-        "version": "3.0.0"
+        "version": "3.0.0",
     }
 
 
@@ -182,17 +174,17 @@ async def startup_event():
 async def test_interface():
     """
     **Interactive API Test Interface**
-    
+
     This endpoint provides examples and test data for all 4 APIs in the workflow.
     Use these examples to test the complete workflow in Swagger UI.
-    
+
     **Workflow Steps:**
     1. Copy example from API 1 → Test `/v1/project/analyze`
     2. Copy session_id from response → Use in API 2
     3. Test `/v1/questions/respond` → Continue until ready_for_summary
     4. Test `/v1/summary/generate` → Review and confirm
     5. Test `/v1/documents/generate` → Get final documentation
-    
+
     **Authentication Required:**
     Add `Authorization: Bearer your_demandei_api_key` to all requests.
     """
@@ -204,24 +196,24 @@ async def test_interface():
                 "enabled": True,
                 "questions_ttl": "1 hour (3600s)",
                 "documents_ttl": "24 hours (86400s)",
-                "fallback": "In-memory cache when Redis unavailable"
+                "fallback": "In-memory cache when Redis unavailable",
             },
             "async_generation": {
                 "endpoint": "/v1/documents/generate/async",
                 "status_check": "/v1/documents/status/{session_id}",
                 "max_processing_time": "3 minutes",
-                "background_processing": True
+                "background_processing": True,
             },
             "optimizations": {
                 "default_model": "gemini-1.5-pro",
                 "success_rate": "100%",
                 "safety_blocks": "Zero with optimized prompts",
-                "timeout": "3 minutes for sync generation"
-            }
+                "timeout": "3 minutes for sync generation",
+            },
         },
         "authentication": {
             "header": "Authorization: Bearer your_demandei_api_key",
-            "note": "Replace 'your_demandei_api_key' with actual API key"
+            "note": "Replace 'your_demandei_api_key' with actual API key",
         },
         "workflow_examples": {
             "api_1_project_analysis": {
@@ -231,8 +223,8 @@ async def test_interface():
                     "project_description": "Sistema de gestão para clínica veterinária com 3 veterinários e 150 pets cadastrados. Funcionalidades: agendamento de consultas, prontuários eletrônicos, controle de vacinas, estoque de medicamentos, faturamento. Orçamento: R$ 60.000. Prazo: 4 meses. Tecnologia preferida: React + Python.",
                     "metadata": {
                         "source": "swagger_ui_test",
-                        "user_id": "test_user_123"
-                    }
+                        "user_id": "test_user_123",
+                    },
                 },
                 "expected_response": {
                     "session_id": "sess_abc123def456",
@@ -242,9 +234,9 @@ async def test_interface():
                     "project_classification": {
                         "type": "web_application",
                         "complexity": "moderate",
-                        "domain": "healthcare"
-                    }
-                }
+                        "domain": "healthcare",
+                    },
+                },
             },
             "api_2_questions_response": {
                 "endpoint": "/v1/questions/respond",
@@ -252,36 +244,30 @@ async def test_interface():
                 "example_request": {
                     "session_id": "sess_abc123def456",
                     "answers": [
-                        {
-                            "question_code": "Q001",
-                            "selected_choices": ["web_app"]
-                        },
-                        {
-                            "question_code": "Q002",
-                            "selected_choices": ["small"]
-                        },
+                        {"question_code": "Q001", "selected_choices": ["web_app"]},
+                        {"question_code": "Q002", "selected_choices": ["small"]},
                         {
                             "question_code": "Q003",
-                            "selected_choices": ["react", "python"]
-                        }
+                            "selected_choices": ["react", "python"],
+                        },
                     ],
-                    "request_next_batch": True
+                    "request_next_batch": True,
                 },
-                "note": "Repeat until response_type becomes 'ready_for_summary'"
+                "note": "Repeat until response_type becomes 'ready_for_summary'",
             },
             "api_3_summary_generation": {
                 "endpoint": "/v1/summary/generate",
                 "method": "POST",
                 "example_request": {
                     "session_id": "sess_abc123def456",
-                    "include_assumptions": True
+                    "include_assumptions": True,
                 },
                 "confirmation_endpoint": "/v1/summary/confirm",
                 "confirmation_request": {
                     "session_id": "sess_abc123def456",
                     "confirmed": True,
-                    "additional_notes": "Summary approved"
-                }
+                    "additional_notes": "Summary approved",
+                },
             },
             "api_4_documents_generation": {
                 "sync_option": {
@@ -290,7 +276,7 @@ async def test_interface():
                     "example_request": {
                         "session_id": "sess_abc123def456",
                         "format_type": "markdown",
-                        "include_implementation_details": True
+                        "include_implementation_details": True,
                     },
                     "expected_response": {
                         "stacks": [
@@ -299,11 +285,11 @@ async def test_interface():
                                 "title": "Frontend Development Stack",
                                 "content": "Detailed implementation guide...",
                                 "technologies": ["React", "Next.js", "TypeScript"],
-                                "estimated_effort": "6-8 weeks"
+                                "estimated_effort": "6-8 weeks",
                             }
                         ]
                     },
-                    "note": "Synchronous generation with 3-minute timeout"
+                    "note": "Synchronous generation with 3-minute timeout",
                 },
                 "async_option": {
                     "start_endpoint": "/v1/documents/generate/async",
@@ -311,46 +297,56 @@ async def test_interface():
                     "example_request": {
                         "session_id": "sess_abc123def456",
                         "format_type": "markdown",
-                        "include_implementation_details": True
+                        "include_implementation_details": True,
                     },
                     "immediate_response": {
                         "status": "processing",
                         "message": "Document generation started",
                         "check_url": "/v1/documents/status/sess_abc123def456",
-                        "estimated_time": "1-3 minutes"
+                        "estimated_time": "1-3 minutes",
                     },
                     "status_endpoint": "/v1/documents/status/{session_id}",
                     "status_method": "GET",
                     "status_responses": {
-                        "processing": {"status": "processing", "progress": "Generating documents..."},
-                        "completed": {"status": "completed", "data": "Full document response"},
-                        "failed": {"status": "failed", "error": "Error message if failed"}
+                        "processing": {
+                            "status": "processing",
+                            "progress": "Generating documents...",
+                        },
+                        "completed": {
+                            "status": "completed",
+                            "data": "Full document response",
+                        },
+                        "failed": {
+                            "status": "failed",
+                            "error": "Error message if failed",
+                        },
                     },
-                    "note": "Background processing, no timeout for client"
-                }
-            }
+                    "note": "Background processing, no timeout for client",
+                },
+            },
         },
         "quick_test_examples": {
             "simple_project": {
                 "description": "Sistema simples de gestão para loja de roupas com vendas e estoque",
-                "use_case": "Quick test with minimal complexity"
+                "use_case": "Quick test with minimal complexity",
             },
             "medium_project": {
                 "description": "Plataforma de e-commerce B2C para venda de produtos de beleza com catálogo, carrinho, pagamentos e avaliações. Orçamento: R$ 150.000, Prazo: 6 meses",
-                "use_case": "Medium complexity test"
+                "use_case": "Medium complexity test",
             },
             "complex_project": {
                 "description": "Sistema completo de gestão hospitalar para 500 leitos incluindo prontuários eletrônicos integrados com HL7 FHIR, módulo de farmácia com controle de estoque automatizado, sistema de agendamento inteligente e dashboard médico com IA para diagnóstico assistido. Orçamento: R$ 2.000.000, Prazo: 18 meses",
-                "use_case": "Complex enterprise system test"
-            }
+                "use_case": "Complex enterprise system test",
+            },
         },
         "tips": {
             "swagger_ui": "Use the 'Try it out' button in Swagger UI to test endpoints",
             "session_management": "Session IDs are returned from API 1 and used in subsequent APIs",
             "authentication": "All endpoints except /health require Bearer token authentication",
-            "response_format": "All responses are in JSON format with structured error handling"
-        }
+            "response_format": "All responses are in JSON format with structured error handling",
+        },
     }
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -359,8 +355,8 @@ async def shutdown_event():
 
 if __name__ == "__main__":
     uvicorn.run(
-        "main:app", 
-        host=settings.host, 
-        port=settings.port, 
-        reload=settings.environment == "development"
+        "main:app",
+        host=settings.host,
+        port=settings.port,
+        reload=settings.environment == "development",
     )
