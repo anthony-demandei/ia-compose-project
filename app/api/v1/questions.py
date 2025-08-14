@@ -94,6 +94,7 @@ async def respond_to_questions(
                 Question(
                     code="Q_FINAL",
                     text="Há alguma informação adicional importante que não foi coberta pelas perguntas anteriores?",
+                    why_it_matters="Informações adicionais podem revelar requisitos críticos ou restrições que impactam significativamente o projeto.",
                     choices=[
                         QuestionChoice(id="none", text="Não, as informações estão completas"),
                         QuestionChoice(id="has_more", text="Sim, tenho informações adicionais", 
@@ -148,6 +149,7 @@ def _generate_next_questions(previous_answers: List) -> List[Question]:
             Question(
                 code="Q004",
                 text="Qual o orçamento estimado para o projeto?",
+                why_it_matters="O orçamento define o escopo técnico, tecnologias viáveis e complexidade da solução que pode ser implementada.",
                 choices=[
                     QuestionChoice(id="low", text="Até R$ 50.000"),
                     QuestionChoice(id="medium", text="R$ 50.000 - R$ 200.000"),
@@ -167,6 +169,7 @@ def _generate_next_questions(previous_answers: List) -> List[Question]:
             Question(
                 code="Q005",
                 text="Qual o prazo desejado para conclusão?",
+                why_it_matters="O prazo impacta diretamente na metodologia de desenvolvimento, tamanho da equipe e priorização de funcionalidades.",
                 choices=[
                     QuestionChoice(id="urgent", text="Menos de 2 meses"),
                     QuestionChoice(id="normal", text="2-6 meses"),

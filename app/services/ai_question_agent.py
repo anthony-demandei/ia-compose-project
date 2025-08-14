@@ -188,18 +188,10 @@ Responda SEMPRE E SOMENTE com um objeto JSON que siga o schema fornecido. Não i
             })
             return cached_questions[:num_questions]
         
-        # Step 2: Get similar projects from Zep for context
-        similar_projects = await self.zep_manager.get_similar_projects(
-            project_description, 
-            limit=3
-        )
-        
         # Build enhanced context
         enhanced_context = session_context or {}
-        if similar_projects:
-            enhanced_context["similar_projects"] = similar_projects
         
-        # Step 3: Build the prompt with context and exclusions
+        # Step 2: Build the prompt with context and exclusions
         prompt = self._build_generation_prompt(
             project_description, 
             num_questions,
@@ -252,14 +244,8 @@ Responda SEMPRE E SOMENTE com um objeto JSON que siga o schema fornecido. Não i
                 "cache_hit": False
             })
 
-            # Cache e Zep
+            # Cache the result
             self.cache.put(project_description, validated_questions)
-            await self.zep_manager.store_project_interaction(
-                session_id=enhanced_context.get("session_id", "unknown"),
-                project_description=project_description,
-                questions=[q.dict() for q in validated_questions],
-                project_classification=enhanced_context.get("classification", {})
-            )
 
             return validated_questions
 

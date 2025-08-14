@@ -120,8 +120,8 @@ ENVIRONMENT=development
 DEBUG=true
 PORT=8001
 
-# Gemini
-GEMINI_MODEL=gemini-2.5-flash
+# Gemini AI
+GEMINI_MODEL=gemini-2.0-flash-exp
 
 # Armazenamento Local
 USE_LOCAL_STORAGE=true
@@ -633,33 +633,43 @@ pytest --cov=app tests/test_api_flows.py
 ia-compose-project/
 ├── app/
 │   ├── api/
-│   │   └── v1/                   # APIs principais
-│   │       ├── project.py        # API 1: Project Analysis
-│   │       ├── questions.py      # API 2: Questions Response
-│   │       ├── summary.py        # API 3: Summary Generation
-│   │       └── documents.py      # API 4: Documents Generation
+│   │   └── v1/                     # APIs principais
+│   │       ├── project.py          # API 1: Project Analysis
+│   │       ├── questions.py        # API 2: Questions Response
+│   │       ├── summary.py          # API 3: Summary Generation
+│   │       └── documents.py        # API 4: Documents Generation
 │   ├── middleware/
-│   │   └── auth.py              # Autenticação Bearer Token
+│   │   └── auth.py                # Autenticação Bearer Token
 │   ├── models/
-│   │   └── api_models.py        # Modelos Pydantic
-│   ├── services/
-│   │   └── question_engine.py   # Geração de perguntas IA
-│   └── utils/
-│       └── pii_safe_logging.py  # Logging seguro
+│   │   └── api_models.py          # Modelos Pydantic
+│   ├── prompts/
+│   │   └── documentation_prompts.py # Prompts IA para documentação
+│   ├── services/                   # 8 serviços ultra-lean
+│   │   ├── ai_factory.py          # Factory para providers IA
+│   │   ├── ai_provider.py         # Interface abstrata IA
+│   │   ├── ai_question_agent.py   # Agente IA para perguntas
+│   │   ├── document_generator.py  # Geração documentação IA
+│   │   ├── gemini_provider.py     # Provider Google Gemini
+│   │   ├── question_cache.py      # Cache inteligente
+│   │   ├── question_engine.py     # Engine híbrida perguntas
+│   │   └── question_templates.py  # Templates padronizados
+│   └── utils/                      # 2 utils essenciais
+│       ├── config.py              # Configurações
+│       └── pii_safe_logging.py    # Logging seguro
 ├── tests/
-│   └── test_api_flows.py        # Testes das 4 APIs
-├── main.py                      # Aplicação FastAPI
-├── requirements.txt             # Dependências
-├── .env.example                 # Exemplo de configuração
-├── docker-compose.yml           # Container setup
-└── README.md                    # Esta documentação
+│   └── test_api_flows.py          # Testes das 4 APIs
+├── main.py                        # Aplicação FastAPI
+├── requirements.txt               # Dependências
+├── .env.example                   # Exemplo de configuração
+├── docker-compose.yml             # Container setup
+└── README.md                      # Esta documentação
 ```
 
 ### Tecnologias Utilizadas
 
 - **FastAPI** - Framework web moderno e rápido
 - **Pydantic v2** - Validação e serialização de dados
-- **Google Gemini API** - Geração inteligente de perguntas
+- **Google Gemini 2.0 Flash + 1.5 Flash** - IA para geração de perguntas e documentação
 - **Uvicorn** - Servidor ASGI
 - **pytest** - Framework de testes
 - **Docker** - Containerização
@@ -709,4 +719,17 @@ ia-compose-project/
 
 **🚀 Demandei Corlabs** - Transformando ideias em especificações técnicas completas com IA
 
-*Versão: 3.0.0 | Última atualização: 2025-01-06*
+*Versão: 3.1.0 | Última atualização: 2025-08-14*
+
+---
+
+## 📈 Changelog Recente
+
+### v3.1.0 (2025-08-14) - Streamline & Optimization
+- ✅ **API 2 Corrigida**: Campo `why_it_matters` adicionado a todas as perguntas
+- ✅ **Projeto Ultra-Lean**: Removidos 44+ arquivos obsoletos e pastas vazias
+- ✅ **Google Gemini Exclusivo**: Remoção completa do OpenAI e Redis
+- ✅ **8 Serviços + 2 Utils**: Arquitetura maximamente otimizada
+- ✅ **Documentação IA**: 500+ linhas por stack garantidas
+- ✅ **100% Funcional**: Todas as 4 APIs testadas e aprovadas
+- ✅ **Zero Dead Code**: Projeto limpo sem dependências desnecessárias
