@@ -47,7 +47,7 @@ services:
       # =============================================================================
       # AI CONFIGURATION - GOOGLE GEMINI
       # =============================================================================
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-AIzaSyBzEr9w7CZ4nwp4p-Szqfqc1YgOCqm8nos}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
       
       # Primary, Fallback, and Last Resort Model Configuration
       GEMINI_PRIMARY_MODEL: ${GEMINI_PRIMARY_MODEL:-gemini-1.5-pro}
@@ -82,10 +82,6 @@ services:
       LOCAL_DOCUMENTS_PATH: ${LOCAL_DOCUMENTS_PATH:-/app/storage/documents}
       LOCAL_SESSIONS_PATH: ${LOCAL_SESSIONS_PATH:-/app/storage/sessions}
 
-      # Cloud Storage (Optional for production)
-      # GCS_BUCKET_NAME: ${GCS_BUCKET_NAME:-}
-      # GCS_CREDENTIALS_PATH: ${GCS_CREDENTIALS_PATH:-}
-      # FIRESTORE_PROJECT_ID: ${FIRESTORE_PROJECT_ID:-}
 
       # =============================================================================
       # SESSION MANAGEMENT
