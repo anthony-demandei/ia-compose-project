@@ -1,0 +1,211 @@
+# =============================================================================
+# Coolify Configuration for IA Compose API
+# =============================================================================
+# This file defines the deployment configuration for Coolify
+# Documentation: https://coolify.io/docs
+# =============================================================================
+
+version: '1.0'
+
+# Application metadata
+application:
+  name: ia-compose-api
+  description: AI-powered API for project analysis and documentation generation
+  type: docker-compose
+  
+# Build configuration
+build:
+  type: dockerfile
+  dockerfile: Dockerfile
+  context: .
+  args:
+    BUILDKIT_INLINE_CACHE: 1
+  
+# Service configuration
+services:
+  # Main API service
+  api:
+    name: ia-compose-api
+    port: 8001
+    protocol: http
+    
+    # Resource limits
+    resources:
+      cpu: 2
+      memory: 2048  # MB
+      
+    # Health check
+    healthcheck:
+      enabled: true
+      path: /health
+      interval: 30
+      timeout: 10
+      retries: 3
+      
+    # Auto-scaling (optional)
+    scaling:
+      min_replicas: 1
+      max_replicas: 3
+      target_cpu: 70
+      target_memory: 80
+      
+  # Redis cache service
+  redis:
+    name: ia-compose-redis
+    image: redis:7-alpine
+    port: 6379
+    protocol: tcp
+    
+    resources:
+      cpu: 0.5
+      memory: 512  # MB
+      
+    volumes:
+      - name: redis-data
+        path: /data
+        size: 5  # GB
+        
+# Domains and SSL
+domains:
+  - name: compose.demandei.com.br
+    ssl: true
+    force_ssl: true
+    www: false
+    
+# Environment variables (secrets will be injected from Coolify)
+environment:
+  # Core settings
+  ENVIRONMENT: production
+  DEBUG: false
+  HOST: 0.0.0.0
+  PORT: 8001
+  
+  # Redis configuration
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  ENABLE_REDIS_CACHE: true
+  
+  # Storage
+  USE_LOCAL_STORAGE: true
+  LOCAL_STORAGE_PATH: /app/storage
+  
+  # Logging
+  LOG_LEVEL: WARNING
+  ENABLE_PII_SAFE_LOGGING: true
+  
+  # Performance
+  ENABLE_RESPONSE_COMPRESSION: true
+  MAX_CONCURRENT_REQUESTS: 500
+  
+# Secrets (managed by Coolify)
+secrets:
+  - DEMANDEI_API_KEY
+  - GEMINI_API_KEY
+  - REDIS_PASSWORD
+  
+# Volumes
+volumes:
+  - name: storage
+    path: /app/storage
+    size: 10  # GB
+    persistent: true
+    
+  - name: logs
+    path: /app/logs
+    size: 5  # GB
+    persistent: true
+    
+  - name: redis-data
+    path: /data
+    size: 5  # GB
+    persistent: true
+    
+# Network configuration
+network:
+  name: ia-compose-network
+  driver: bridge
+  
+# Deployment settings
+deployment:
+  strategy: rolling
+  max_surge: 1
+  max_unavailable: 0
+  
+# Monitoring and alerts
+monitoring:
+  enabled: true
+  metrics_path: /metrics
+  
+  alerts:
+    - name: high_cpu
+      condition: cpu > 80
+      duration: 5m
+      
+    - name: high_memory
+      condition: memory > 90
+      duration: 5m
+      
+    - name: health_check_failed
+      condition: health_check_failures > 2
+      duration: 2m
+      
+# Backup configuration
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention: 30  # days
+  
+  paths:
+    - /app/storage
+    - /app/logs
+    
+# Hooks
+hooks:
+  pre_deploy:
+    - name: prepare_volumes
+      command: |
+        mkdir -p /app/storage/documents
+        mkdir -p /app/storage/sessions
+        mkdir -p /app/logs
+        chmod 755 /app/storage
+        chmod 755 /app/logs
+        
+  post_deploy:
+    - name: health_check
+      command: |
+        sleep 10
+        curl -f http://localhost:8001/health || exit 1
+        
+  on_failure:
+    - name: rollback
+      command: echo "Deployment failed, rolling back..."
+      
+# Coolify-specific settings
+coolify:
+  auto_deploy: true
+  branch: main
+  build_pack: dockerfile
+  
+  # GitHub integration (if using)
+  github:
+    enabled: false
+    repository: demandei/ia-compose-api
+    webhook: true
+    
+  # GitLab integration (if using)
+  gitlab:
+    enabled: false
+    repository: demandei/ia-compose-api
+    webhook: true
+    
+  # Notifications
+  notifications:
+    slack:
+      enabled: false
+      webhook_url: ${SLACK_WEBHOOK_URL}
+      
+    email:
+      enabled: true
+      recipients:
+        - devops@demandei.com.br
+        - support@demandei.com.br

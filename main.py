@@ -1,4 +1,7 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 import uvicorn
 import os
 import logging
@@ -124,6 +127,62 @@ app = FastAPI(
     license_info={"name": "Proprietary License", "url": "https://demandei.com/license"},
 )
 
+# Configure CORS middleware
+def configure_cors(app: FastAPI, settings):
+    """Configure CORS middleware with production settings."""
+    # Process CORS origins - support wildcards for *.demandei.com.br
+    origins = settings.cors_origins
+    
+    # In production, dynamically handle Demandei subdomains
+    if settings.environment == "production":
+        # Add specific production origins
+        origins = [
+            "https://compose.demandei.com.br",
+            "https://demandei.com.br",
+            "https://www.demandei.com.br",
+            "https://app.demandei.com.br",
+            "https://api.demandei.com.br",
+        ]
+    
+    # Add CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=settings.cors_allow_credentials,
+        allow_methods=settings.cors_allow_methods,
+        allow_headers=settings.cors_allow_headers,
+        max_age=settings.cors_max_age,
+        # Allow regex pattern for Demandei subdomains in production
+        allow_origin_regex=r"https://.*\.demandei\.com\.br" if settings.environment == "production" else None,
+    )
+
+# Configure security middleware
+def configure_security_middleware(app: FastAPI, settings):
+    """Configure security-related middleware."""
+    # GZip compression for responses
+    if settings.enable_response_compression:
+        app.add_middleware(GZipMiddleware, minimum_size=1000)
+    
+    # Trusted host middleware for production
+    if settings.environment == "production":
+        app.add_middleware(
+            TrustedHostMiddleware,
+            allowed_hosts=[
+                "compose.demandei.com.br",
+                "*.demandei.com.br",
+                "localhost",
+            ]
+        )
+
+# Apply middleware configuration
+configure_cors(app, settings)
+configure_security_middleware(app, settings)
+
+# Import and configure additional security middleware
+from app.middleware.security import configure_security_middleware as configure_additional_security
+configure_additional_security(app, settings)
+
+# Include routers
 app.include_router(project_router)  # API 1: Project Analysis
 app.include_router(questions_router)  # API 2: Questions Response
 app.include_router(summary_router)  # API 3: Summary Generation

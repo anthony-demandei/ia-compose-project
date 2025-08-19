@@ -48,6 +48,10 @@ class Settings(BaseSettings):
 
     # API Configuration
     cors_origins: List[str] = ["http://localhost:3000", "http://localhost:8080", "http://localhost:8000"]
+    cors_allow_credentials: bool = True
+    cors_allow_methods: List[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    cors_allow_headers: List[str] = ["*"]
+    cors_max_age: int = 86400
     max_request_size: int = 10485760  # 10MB
     request_timeout: int = 120  # 2 minutes
 
@@ -62,6 +66,16 @@ class Settings(BaseSettings):
     enable_response_compression: bool = True
     enable_request_validation: bool = True
     max_concurrent_requests: int = 100
+    workers: int = 4  # Number of worker processes for production
+    
+    # Security Configuration
+    rate_limit_enabled: bool = False
+    rate_limit_per_minute: int = 100
+    rate_limit_per_hour: int = 1000
+    rate_limit_per_day: int = 10000
+    security_headers_enabled: bool = False
+    hsts_max_age: int = 31536000
+    content_security_policy: str = "default-src 'self';"
 
     # Redis Cache Configuration
     enable_redis_cache: bool = True

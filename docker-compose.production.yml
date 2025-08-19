@@ -1,0 +1,158 @@
+version: '3.8'
+
+services:
+  # Redis Cache Service (Production)
+  redis:
+    image: redis:7-alpine
+    container_name: ia-compose-redis
+    restart: always
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --requirepass ${REDIS_PASSWORD:-}
+      --bind 0.0.0.0
+      --protected-mode yes
+    volumes:
+      - redis-data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - ia-compose-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # IA Compose API Service (Production)
+  ia-compose-api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      cache_from:
+        - compose.demandei.com.br/ia-compose-api:latest
+      args:
+        BUILDKIT_INLINE_CACHE: 1
+    image: compose.demandei.com.br/ia-compose-api:latest
+    container_name: ia-compose-api
+    restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "${PORT:-8001}:${PORT:-8001}"
+    env_file:
+      - .env.production
+    environment:
+      # Override for Docker networking
+      REDIS_HOST: redis
+      # Production flags
+      ENVIRONMENT: production
+      DEBUG: false
+      PRODUCTION_MODE: true
+    volumes:
+      # Persistent storage for documents and sessions
+      - ./storage:/app/storage:rw
+      # Persistent storage for logs
+      - ./logs:/app/logs:rw
+      # SSL certificates (if needed)
+      - ./certs:/app/certs:ro
+    networks:
+      - ia-compose-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-8001}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    labels:
+      # Coolify labels for automatic detection
+      - "coolify.managed=true"
+      - "coolify.type=application"
+      - "coolify.name=ia-compose-api"
+      - "coolify.domain=compose.demandei.com.br"
+      - "coolify.ssl=true"
+      - "coolify.port=8001"
+
+  # Optional: Nginx reverse proxy for production
+  nginx:
+    image: nginx:alpine
+    container_name: ia-compose-nginx
+    restart: always
+    depends_on:
+      - ia-compose-api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx-conf.d:/etc/nginx/conf.d:ro
+      - ./certs:/etc/nginx/certs:ro
+      - nginx-cache:/var/cache/nginx
+    networks:
+      - ia-compose-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    profiles:
+      - with-nginx
+
+networks:
+  ia-compose-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  redis-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./volumes/redis
+  nginx-cache:
+    driver: local
+
+# Coolify-specific configuration
+x-coolify:
+  # Health check URL
+  healthcheck: /health
+  # Build configuration
+  build:
+    dockerfile: Dockerfile
+    context: .
+  # Environment
+  environment: production
+  # Secrets (will be injected by Coolify)
+  secrets:
+    - DEMANDEI_API_KEY
+    - GEMINI_API_KEY
+    - REDIS_PASSWORD
