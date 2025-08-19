@@ -83,9 +83,9 @@ services:
       LOCAL_SESSIONS_PATH: ${LOCAL_SESSIONS_PATH:-/app/storage/sessions}
 
       # Cloud Storage (Optional for production)
-      GCS_BUCKET_NAME: ${GCS_BUCKET_NAME:-}
-      GCS_CREDENTIALS_PATH: ${GCS_CREDENTIALS_PATH:-}
-      FIRESTORE_PROJECT_ID: ${FIRESTORE_PROJECT_ID:-}
+      # GCS_BUCKET_NAME: ${GCS_BUCKET_NAME:-}
+      # GCS_CREDENTIALS_PATH: ${GCS_CREDENTIALS_PATH:-}
+      # FIRESTORE_PROJECT_ID: ${FIRESTORE_PROJECT_ID:-}
 
       # =============================================================================
       # SESSION MANAGEMENT
