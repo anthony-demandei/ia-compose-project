@@ -96,8 +96,7 @@ services:
       # =============================================================================
       # API CONFIGURATION
       # =============================================================================
-      # CORS_ORIGINS is configured automatically in code based on environment
-      # CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000","http://localhost:8080","http://localhost:8000"]}
+      # CORS is hardcoded in main.py based on ENVIRONMENT variable
       MAX_REQUEST_SIZE: ${MAX_REQUEST_SIZE:-10485760}
       REQUEST_TIMEOUT: ${REQUEST_TIMEOUT:-120}
 

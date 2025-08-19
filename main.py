@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import os
 import logging
@@ -122,6 +123,35 @@ app = FastAPI(
         "email": "support@demandei.com",
     },
     license_info={"name": "Proprietary License", "url": "https://demandei.com/license"},
+)
+
+# Configure CORS middleware with hardcoded origins
+if settings.environment == "production":
+    # Production origins for Demandei
+    origins = [
+        "https://compose.demandei.com.br",
+        "https://demandei.com.br",
+        "https://www.demandei.com.br",
+        "https://app.demandei.com.br",
+        "https://api.demandei.com.br",
+    ]
+else:
+    # Development origins
+    origins = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:8000",
+        "http://localhost:8080",
+    ]
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+    max_age=86400,
 )
 
 app.include_router(project_router)  # API 1: Project Analysis

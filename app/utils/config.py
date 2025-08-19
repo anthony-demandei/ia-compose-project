@@ -1,7 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import List, Union
-import json
-import os
+from typing import List
 
 
 class Settings(BaseSettings):
@@ -49,7 +47,7 @@ class Settings(BaseSettings):
     session_cleanup_interval: int = 300  # 5 minutes
 
     # API Configuration
-    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:8080", "http://localhost:8000"]
+    # CORS is now hardcoded in main.py based on environment
     max_request_size: int = 10485760  # 10MB
     request_timeout: int = 120  # 2 minutes
 
@@ -100,27 +98,7 @@ class Settings(BaseSettings):
     gcs_credentials_path: str = ""
     firestore_project_id: str = ""
 
-    model_config = {
-        "env_file": ".env", 
-        "case_sensitive": False, 
-        "extra": "ignore",
-        "json_schema_extra": {
-            "env_parse_none_str": "null"
-        }
-    }
-    
-    @classmethod
-    def parse_env_var(cls, field_name: str, raw_value: str):
-        """Custom parser for environment variables."""
-        # Special handling for CORS_ORIGINS
-        if field_name == "cors_origins" and raw_value:
-            if raw_value.startswith("["):
-                # It's already a JSON array
-                return json.loads(raw_value)
-            else:
-                # Treat as comma-separated string
-                return [origin.strip() for origin in raw_value.split(",")]
-        return raw_value
+    model_config = {"env_file": ".env", "case_sensitive": False, "extra": "ignore"}
 
 
 # Global settings instance
